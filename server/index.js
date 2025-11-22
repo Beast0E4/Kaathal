@@ -4,7 +4,8 @@ const app = express();
 const bodyParser = require('body-parser');
 const {Mongo_DB_URL, PORT} = require('./src/config/db.config');
 const mongoose = require('mongoose');
-// const postRoutes = require("./src/routes/posts.routes");
+
+const userRoutes = require ('./src/routes/user.route');
 // server instance
 const http = require("http");
 // const setupSocket = require("../server/socket/socket");
@@ -22,7 +23,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.text());
 
-// app.use('/auth',userroutes);
+app.use('/auth',userRoutes);
 
 
 
