@@ -21,7 +21,6 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-        console.log (email, password);
             const res = await dispatch (login ({email, password}));
             if (res.payload) navigate('/', { replace: true });
             else resetDetails();

@@ -18,7 +18,6 @@ const signup = async(req,res) =>  {
 };
 
 const signin = async(req,res) => {
-    console.log (req.body);
     const response = await userService.validateUser(req.body);
     if(response.error){
         return res.status(StatusCodes.BAD_REQUEST).send({

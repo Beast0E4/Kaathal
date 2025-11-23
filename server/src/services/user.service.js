@@ -41,7 +41,6 @@ const validateUser = async (data) => {
     const response = {};
     try {
         let res = await User.findOne({ email: data.email });
-        console.log ("Finnaly", res);
         if (!res) {
             response.error = "Invalid username or email";
             return response;
