@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axiosInstance from "../../config/axiosInstance";
-// import { showToast } from "./toast.slice";
+import { showToast } from "./toast.slice";
 
 const initialState = {
     data: JSON.parse(localStorage.getItem("data")) || undefined,

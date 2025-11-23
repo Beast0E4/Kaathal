@@ -15,12 +15,11 @@ function Home () {
           Loom.
         </div>
         <div className="flex items-center gap-6">
-          <button 
-            onClick={() => navigate('/dashboard')}
+          <Link to={'/dashboard'}
             className="text-sm font-medium bg-black text-white px-6 py-2.5 rounded-full hover:bg-gray-800 transition-all"
           >
             Dashboard
-          </button>
+          </Link>
         </div>
       </nav>
 

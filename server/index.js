@@ -6,6 +6,8 @@ const {Mongo_DB_URL, PORT} = require('./src/config/db.config');
 const mongoose = require('mongoose');
 
 const userRoutes = require ('./src/routes/user.route');
+const blogRoutes = require ('./src/routes/blog.route');
+
 // server instance
 const http = require("http");
 // const setupSocket = require("../server/socket/socket");
@@ -23,7 +25,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.text());
 
-app.use('/auth',userRoutes);
+app.use ('/auth',userRoutes);
+app.use ('/blog', blogRoutes);
 
 
 

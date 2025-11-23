@@ -1,6 +1,9 @@
 import { parseInline } from "./InlineParser";
 
-export function parseMarkdown () {
+import {  Quote
+} from 'lucide-react';
+
+export function parseMarkdown (text) {
   if (!text) return [];
   const lines = text.split('\n');
   return lines.map((line, lineIndex) => {

@@ -1,0 +1,111 @@
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import axiosInstance from "../../config/axiosInstance";
+import { showToast } from "./toast.slice";
+
+const initialState = {
+    blogList: [],
+};
+
+export const createBlog = createAsyncThunk('Blog/createBlog', async (blogData, { dispatch, rejectWithValue }) => {
+    try {
+        const response = await axiosInstance.post('blog/create', blogData, {
+            headers: {
+                'x-access-token': localStorage.getItem('token')
+            }
+        });
+
+        return response;
+    } catch (error) {
+        dispatch(showToast({ message: 'Blog creation failed!', type: 'error' }));
+        return rejectWithValue (error.response?.data?.error);
+    }
+});
+
+export const uploadImage = createAsyncThunk('Blog/uploadImage', async (imageData, { dispatch, rejectWithValue }) => {
+    try {
+        const response = await axiosInstance.post('blog/uploadImage', imageData, {
+            headers: {
+                'x-access-token': localStorage.getItem('token')
+            }
+        });
+
+        return response;
+    } catch (error) {
+        dispatch(showToast({ message: 'Image upload failed!', type: 'error' }));
+        return rejectWithValue (error.response?.data?.error);
+    }
+});
+
+export const getBlog = createAsyncThunk('Blog/get_blog', async (slug, { dispatch, rejectWithValue }) => {
+    try {
+        const response = await axiosInstance.get(`blog/${slug}`, {
+            headers: {
+                'x-access-token': localStorage.getItem('token')
+            }
+        });
+
+        return response;
+    } catch (error) {
+        dispatch(showToast({ message: 'Blog fetched failed!', type: 'error' }));
+        return rejectWithValue (error.response?.data?.error);
+    }
+});
+
+export const getAllBlogs = createAsyncThunk('Blog/get_blogs', async (_, { dispatch, rejectWithValue }) => {
+    try {
+        const response = await axiosInstance.get(`blog`, {
+            headers: {
+                'x-access-token': localStorage.getItem('token')
+            }
+        });
+
+        return response;
+    } catch (error) {
+        dispatch(showToast({ message: 'Blog fetched failed!', type: 'error' }));
+        return rejectWithValue (error.response?.data?.error);
+    }
+});
+
+export const deleteBlog = createAsyncThunk('Blog/deleteBlog', async (slug, { dispatch, rejectWithValue }) => {
+    try {
+        const response = await axiosInstance.delete (`blog/${slug}`, {
+            headers: {
+                'x-access-token': localStorage.getItem('token')
+            }
+        });
+
+        return response;
+    } catch (error) {
+        dispatch(showToast({ message: 'Blog deletion failed!', type: 'error' }));
+        return rejectWithValue (error.response?.data?.error);
+    }
+});
+
+const BlogSlice = createSlice({
+    name: 'blog',
+    initialState,
+    reducers: { },
+    extraReducers: (builder) => {
+        builder
+            .addCase(createBlog.fulfilled, (state, action) => {
+                console.log (action.payload);
+                if (!action.payload?.data) return;
+                state.blogList = [action.payload?.data?.blogsData?.blog, ...state.blogList];
+            })
+            .addCase(getAllBlogs.fulfilled, (state, action) => {
+                if (!action.payload?.data) return;
+                state.blogList = action.payload?.data?.blogsData?.blog;
+            })
+            .addCase(deleteBlog.fulfilled, (state, action) => {
+                const deletedBlog = action.payload?.data?.blogsData?.blog;
+                if (!deletedBlog) return;
+
+                state.blogList = state.blogList.filter ((blog) => blog._id !== deletedBlog._id
+                );
+            });
+    }
+});
+
+export const {} = BlogSlice.actions;
+
+export default BlogSlice.reducer;

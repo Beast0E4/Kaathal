@@ -4,16 +4,26 @@ import {
     ChevronLeft, Eye, Settings, X,
     Save, Send, Globe, Hash, Sparkles,
     PanelLeftClose, CheckCircle2, AlertCircle,
-    Quote, Highlighter, ImagePlus
+    Quote, Highlighter, ImagePlus, UploadCloud // Added UploadCloud
 } from 'lucide-react';
 import ToolbarButton from "../components/ToolbarButton";
+import { useDispatch, useSelector } from "react-redux";
+import { createBlog, uploadImage } from "../redux/slices/blog.slice";
+import { useNavigate } from "react-router-dom";
+// import axios from 'axios'; // Ensure you have axios or use fetch
 
 function Editor() {
+    const blogState = useSelector((state) => state.blog);
+    const authState = useSelector((state) => state.auth);
+
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
-       const [coverImage, setCoverImage] = useState(null);
-    const [slug, setSlug] = useState("");
+    const [cover_image, setCoverImage] = useState(null);
+    const [slug, setslug] = useState("");
     const [tags, setTags] = useState([]);
     const [newTag, setNewTag] = useState("");
     const [status, setStatus] = useState('draft');
@@ -22,6 +32,7 @@ function Editor() {
     // Modal states for insertion
     const [showUrlInput, setShowUrlInput] = useState(false);
     const [tempUrl, setTempUrl] = useState('');
+    const [isUploadingImage, setIsUploadingImage] = useState(false); // New state for upload loading
     const [selectionRange, setSelectionRange] = useState(null);
 
     const textareaRef = useRef(null);
@@ -106,44 +117,52 @@ function Editor() {
         }, 0);
     };
 
-    const handleCoverImageUpload = (e) => {
+    // New Function to handle image upload to server
+    const handleImageFileUpload = async (e) => {
         const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => setCoverImage(reader.result);
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        setIsUploadingImage(true);
+        const formData = new FormData();
+        formData.append("image", file);
+
+        try {
+            const res = await dispatch (uploadImage (formData));
+            setTempUrl(res.payload.data.imagePath);
+
+        } catch (error) {
+            console.error("Error uploading image:", error);
+            alert("Failed to upload image");
+        } finally {
+            setIsUploadingImage(false);
         }
     };
 
-    const handleSave = async (newStatus = status) => {
-        if (!user) return;
+    const handleCoverImageUpload = (e) => {
+        const file = e.target.files[0];
+        setCoverImage (file);
+    };
 
+    const handleSave = async (newStatus = status) => {
         setSaveStatus('saving');
 
-        const postData = {
-            title,
-            content,
-            coverImage,
-            tags,
-            status: newStatus,
-            slug: slug || title.toLowerCase().replace(/\s+/g, '-'),
-            updatedAt: serverTimestamp()
-        };
+        const formData = new FormData();
+        
+        formData.append('userId', authState.data?._id);
+        formData.append('title', title);
+        formData.append('content', content);
+        
+        const finalSlug = slug || title.toLowerCase().replace(/\s+/g, '-');
+        formData.append('slug', finalSlug);
+
+        formData.append('tags', JSON.stringify(tags));
+
+        if (cover_image) {
+            formData.append('image', cover_image);
+        }
 
         try {
-            if (postId) {
-                await setDoc(
-                    doc(db, 'artifacts', appId, 'users', user.uid, 'posts', postId),
-                    postData,
-                    { merge: true }
-                );
-            } else {
-                const newDoc = await addDoc(
-                    collection(db, 'artifacts', appId, 'users', user.uid, 'posts'),
-                    { ...postData, createdAt: serverTimestamp() }
-                );
-                navigate('/editor', { id: newDoc.id });
-            }
+            await dispatch(createBlog(formData));
             setSaveStatus('saved');
         } catch (err) {
             console.error(err);
@@ -157,6 +176,10 @@ function Editor() {
             setNewTag("");
         }
     };
+
+    const viewBlog = () => {
+        navigate(`/blog/${slug}`);
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 text-slate-800 font-sans flex flex-col">
@@ -202,9 +225,8 @@ function Editor() {
 
                     <button
                         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        className={`p-2 text-gray-500 hover:bg-gray-100 rounded-lg ${
-                            isSidebarOpen ? 'bg-gray-100' : ''
-                        }`}
+                        className={`p-2 text-gray-500 hover:bg-gray-100 rounded-lg ${isSidebarOpen ? 'bg-gray-100' : ''
+                            }`}
                     >
                         {isSidebarOpen ? (
                             <PanelLeftClose size={20} />
@@ -214,12 +236,22 @@ function Editor() {
                     </button>
 
                     <button
-                        onClick={() => handleSave('published')}
-                        className={`flex items-center gap-2 text-white px-4 py-2 rounded-full text-sm font-medium transition-all shadow-md hover:shadow-lg transform active:scale-95 ${
-                            status === 'published'
+                        onClick={viewBlog}
+                        className={`flex items-center gap-2 text-white px-4 py-2 rounded-full text-sm font-medium transition-all shadow-md hover:shadow-lg transform active:scale-95 ${status === 'published'
                                 ? 'bg-green-600 hover:bg-green-700'
                                 : 'bg-slate-900 hover:bg-slate-800'
-                        }`}
+                            }`}
+                    >
+                        <Send size={16} />
+                        "View"
+                    </button>
+
+                    <button
+                        onClick={() => handleSave('published')}
+                        className={`flex items-center gap-2 text-white px-4 py-2 rounded-full text-sm font-medium transition-all shadow-md hover:shadow-lg transform active:scale-95 ${status === 'published'
+                                ? 'bg-green-600 hover:bg-green-700'
+                                : 'bg-slate-900 hover:bg-slate-800'
+                            }`}
                     >
                         <Send size={16} />
                         {status === 'published' ? 'Update' : 'Publish'}
@@ -231,7 +263,7 @@ function Editor() {
                 <main className="flex-1 overflow-y-auto relative">
                     <div className="max-w-3xl mx-auto py-12 px-8 min-h-[calc(100vh-4rem)] bg-white my-8 rounded-xl shadow-sm border border-gray-100 relative">
                         {/* Cover Image */}
-                        {!coverImage ? (
+                        {!cover_image ? (
                             <div className="group relative h-32 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all cursor-pointer mb-8 overflow-hidden">
                                 <div className="flex flex-col items-center gap-2">
                                     <ImageIcon size={24} />
@@ -244,12 +276,13 @@ function Editor() {
                                     className="absolute inset-0 opacity-0 cursor-pointer"
                                     onChange={handleCoverImageUpload}
                                     accept="image/*"
+                                    encType= "multipart/form-data"
                                 />
                             </div>
                         ) : (
                             <div className="relative h-64 w-full mb-8 rounded-xl overflow-hidden group">
                                 <img
-                                    src={coverImage}
+                                    src={URL.createObjectURL (cover_image)}
                                     alt="Cover"
                                     className="w-full h-full object-cover"
                                 />
@@ -311,17 +344,57 @@ function Editor() {
                             </button>
                         </div>
 
-                        {/* URL Input Modal */}
+                        {/* URL Input Modal (Modified) */}
                         {showUrlInput && (
                             <div className="absolute top-36 left-0 right-0 mx-auto w-96 bg-white p-4 shadow-xl rounded-xl border border-gray-200 z-20 animate-in fade-in zoom-in duration-200">
-                                <h3 className="font-bold text-sm mb-2">
-                                    Insert Image URL
+                                <h3 className="font-bold text-sm mb-3">
+                                    Insert Image
                                 </h3>
+                                
+                                {/* Upload Button Section */}
+                                <div className="mb-4">
+                                    <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors relative overflow-hidden ${isUploadingImage ? 'opacity-50 pointer-events-none' : ''}`}>
+                                        
+                                        {isUploadingImage ? (
+                                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                <span className="text-sm text-gray-500 animate-pulse">Uploading to server...</span>
+                                            </div>
+                                        ) : tempUrl ? (
+                                            // Display the selected image
+                                            <img 
+                                                src={tempUrl} 
+                                                alt="Preview" 
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            // Display the upload placeholder
+                                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                <UploadCloud className="w-6 h-6 mb-1 text-gray-400" />
+                                                <p className="text-xs text-gray-500"><span className="font-semibold">Click to upload</span></p>
+                                            </div>
+                                        )}
+
+                                        <input 
+                                            type="file" 
+                                            className="hidden" 
+                                            accept="image/*"
+                                            encType= "multipart/form-data"
+                                            onChange={handleImageFileUpload}
+                                        />
+                                    </label>
+                                </div>
+
+                                <div className="relative flex items-center mb-3">
+                                    <div className="flex-grow border-t border-gray-200"></div>
+                                    <span className="flex-shrink-0 mx-2 text-xs text-gray-400 uppercase">Or paste link</span>
+                                    <div className="flex-grow border-t border-gray-200"></div>
+                                </div>
+
                                 <input
                                     autoFocus
                                     type="text"
                                     placeholder="https://example.com/image.jpg"
-                                    className="w-full border border-gray-300 rounded-md p-2 text-sm mb-3 outline-none"
+                                    className="w-full border border-gray-300 rounded-md p-2 text-sm mb-3 outline-none focus:border-black transition-colors"
                                     value={tempUrl}
                                     onChange={(e) => setTempUrl(e.target.value)}
                                     onKeyDown={(e) =>
@@ -340,7 +413,8 @@ function Editor() {
                                     </button>
                                     <button
                                         onClick={confirmUrlInput}
-                                        className="px-3 py-1.5 text-xs font-medium bg-black text-white rounded-md hover:bg-gray-800"
+                                        className="px-3 py-1.5 text-xs font-medium bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50"
+                                        disabled={!tempUrl}
                                     >
                                         Add Image
                                     </button>
@@ -361,11 +435,10 @@ function Editor() {
 
                 {/* Settings Sidebar */}
                 <aside
-                    className={`bg-white border-l border-gray-100 w-80 transition-all duration-300 ease-in-out flex flex-col overflow-y-auto absolute right-0 h-full z-20 shadow-2xl ${
-                        isSidebarOpen
+                    className={`bg-white border-l border-gray-100 w-80 transition-all duration-300 ease-in-out flex flex-col overflow-y-auto absolute right-0 h-full z-20 shadow-2xl ${isSidebarOpen
                             ? 'translate-x-0'
                             : 'translate-x-full opacity-0 pointer-events-none'
-                    }`}
+                        }`}
                 >
                     <div className="p-6">
                         <h3 className="font-semibold text-gray-900 mb-6">
@@ -383,7 +456,7 @@ function Editor() {
                                 <input
                                     type="text"
                                     value={slug}
-                                    onChange={(e) => setSlug(e.target.value)}
+                                    onChange={(e) => setslug(e.target.value)}
                                     placeholder={title
                                         .toLowerCase()
                                         .replace(/\s+/g, '-')}
@@ -445,11 +518,10 @@ function Editor() {
                             <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                                 <div className="flex items-center justify-between mb-2">
                                     <span
-                                        className={`font-bold text-xl ${
-                                            title.length > 10
+                                        className={`font-bold text-xl ${title.length > 10
                                                 ? 'text-green-500'
                                                 : 'text-yellow-500'
-                                        }`}
+                                            }`}
                                     >
                                         {title.length > 10 ? '92' : '45'}
                                     </span>
@@ -462,11 +534,10 @@ function Editor() {
 
                                 <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
                                     <div
-                                        className={`h-2 rounded-full ${
-                                            title.length > 10
+                                        className={`h-2 rounded-full ${title.length > 10
                                                 ? 'bg-green-500'
                                                 : 'bg-yellow-500'
-                                        }`}
+                                            }`}
                                         style={{
                                             width:
                                                 title.length > 10
@@ -493,13 +564,13 @@ function Editor() {
                                         <AlertCircle
                                             size={14}
                                             className={
-                                                coverImage
+                                                cover_image
                                                     ? 'text-green-500 mt-0.5'
                                                     : 'text-orange-400 mt-0.5'
                                             }
                                         />
                                         <span>
-                                            {coverImage
+                                            {cover_image
                                                 ? 'Cover image added'
                                                 : 'Add cover image'}
                                         </span>

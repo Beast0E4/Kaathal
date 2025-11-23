@@ -24,13 +24,13 @@ const storage = new CloudinaryStorage({
       let folder, resource_type;
 
       if (isImage) {
-        folder = 'socialMedia/images';
+        folder = 'kaathal/images';
         resource_type = 'image';
       } else if (isVideo) {
-        folder = 'socialMedia/videos';
+        folder = 'kaathal/videos';
         resource_type = 'video';
       } else {
-        folder = 'socialMedia/files';
+        folder = 'kaathal/files';
         resource_type = 'raw';
       }
 
@@ -66,27 +66,12 @@ const storage = new CloudinaryStorage({
 const uploadFile = async (file) => {
   const uploadRes = await cloudinary.uploader.upload(file.data, {
     resource_type: 'auto',
-    folder: 'socialMedia/files',
+    folder: 'kaathal/files',
     public_id: `${Date.now()}-${file.name}`,
   });
   return uploadRes;
 }
 
-
-// Upload multiple image and videos
-const upload = multer({ 
-  storage,
-  limits: { fileSize: 20 * 1024 * 1024 }, // Limit file size (e.g., 20MB)
-  fileFilter: (req, file, cb) => {
-    if (!file.mimetype.startsWith('image') && !file.mimetype.startsWith('video')) {
-      return cb(new Error('Only image and video files are allowed!'), false);
-    }
-    cb(null, true);
-  },
-}).fields([
-  { name: 'image', maxCount: 10 },
-  { name: 'video', maxCount: 5 },
-]);
 
 // upload single image
 const uploadSingleImage = multer({ 
@@ -154,7 +139,7 @@ const updateImage = async (oldPublicId) => {
   try {
     await deleteImages([oldPublicId]);
     const uploadResponse = await cloudinary.uploader.upload(file.path, {
-      folder: 'socialMedia/images',
+      folder: 'kaathal/images',
       resource_type: 'image'
     });
     return { success: true, url: uploadResponse.secure_url, public_id: uploadResponse.public_id };
@@ -165,4 +150,4 @@ const updateImage = async (oldPublicId) => {
 };
 
 
-module.exports = {upload, uploadFile, uploadSingleImage, uploadSingleVideo, updateImage, deleteImages, deleteVideos};
+module.exports = {uploadFile, uploadSingleImage, uploadSingleVideo, updateImage, deleteImages, deleteVideos};
