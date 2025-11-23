@@ -2,19 +2,27 @@ import {
   Eye, Globe, ArrowRight,
   Feather, Zap,  PenTool,
 } from 'lucide-react';
+import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 function Home () {
+    const navigate = useNavigate();
     const authState = useSelector ((state) => state.auth);
+
+    useEffect (() => {
+    if (!authState?.isLoggedIn || !authState?.data?.email) {
+      navigate("/login");
+    }
+  }, [authState, navigate]);
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-black selection:text-white flex flex-col">
       <nav className="px-6 h-20 flex items-center justify-between border-b border-gray-100 w-full">
         <div className="flex items-center gap-2 font-bold text-xl tracking-tighter">
           <div className="bg-black text-white p-1 rounded-md"><Feather size={18} /></div>
-          Loom.
+          Kaathal.
         </div>
         <div className="flex items-center gap-6">
           <Link to={'/dashboard'}
@@ -67,8 +75,8 @@ function Home () {
 
       <footer className="bg-white py-8 border-t border-gray-200">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-xs text-gray-400">
-          <div className="flex items-center gap-2 font-bold text-black tracking-tighter mb-4 md:mb-0">Loom.</div>
-          <p>© 2024 Loom Platform.</p>
+          <div className="flex items-center gap-2 font-bold text-black tracking-tighter mb-4 md:mb-0">Kaathal.</div>
+          <p>© 2024 Kaathal Platform.</p>
         </div>
       </footer>
     </div>

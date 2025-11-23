@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Lock, Mail, Loader2, CheckCircle } from 'lucide-react';
 import { login } from '../../redux/slices/auth.slice';
 import { showToast } from '../../redux/slices/toast.slice'
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -163,9 +163,9 @@ const Login = () => {
           {/* Footer */}
           <p className="mt-8 text-center text-sm text-gray-500">
             Don't have an account?{' '}
-            <a href="#" className="font-semibold text-indigo-600 hover:text-indigo-500">
+            <Link to={'/create-account'} className="font-semibold text-indigo-600 hover:text-indigo-500">
               Create free account
-            </a>
+            </Link>
           </p>
 
         </div>

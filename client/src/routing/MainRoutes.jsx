@@ -9,11 +9,19 @@ import Editor from "../pages/Editor";
 import Login from "../pages/Login/Login";
 import SignUp from "../pages/Signup/Signup";
 import Profile from "../pages/Profile/Profile";
+import ProtectedRoute from "./ProtectedRoute";
 
 function MainRoutes() {
   return (
     <>
-        <Routes path="/" element={<Layout />}>
+        <Routes
+            path="/"
+            element={
+            <ProtectedRoute>
+                <Layout />   {/* now Layout stays clean */}
+            </ProtectedRoute>
+            }
+        >
             <Route index element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/create-account" element={<SignUp />} />

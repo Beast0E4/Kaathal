@@ -38,7 +38,7 @@ function Dashboard () {
     <div className="min-h-screen bg-gray-50 font-sans text-slate-800">
       <nav className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 sticky top-0 z-50">
          <div className="flex items-center gap-2 font-bold text-xl cursor-pointer" onClick={() => navigate('/')}>
-            <Feather size={18} /> Loom.
+            <Feather size={18} /> Kaathal.
          </div>
          <div className="text-sm text-gray-500">Dashboard</div>
       </nav>
