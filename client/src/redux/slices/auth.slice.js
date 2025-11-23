@@ -14,6 +14,7 @@ export const login = createAsyncThunk('/auth/login', async (data, { dispatch }) 
         if(!response) dispatch (showToast ({ message: "Something went wrong, try again!", type: 'error' }));
         return  response;
     } catch (error) {
+        console.log (error);
         dispatch (showToast ({ message: error.response.data.error || "An error occurred!", type: 'error' }));
     }
 });
