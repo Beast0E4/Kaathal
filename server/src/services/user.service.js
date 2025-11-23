@@ -41,12 +41,10 @@ const validateUser = async (data) => {
     const response = {};
     try {
         let res = await User.findOne({ email: data.email });
+        console.log ("Finnaly", res);
         if (!res) {
-            res = await User.findOne({ username: data.email });
-            if (!res) {
-                response.error = "Invalid username or email";
-                return response;
-            }
+            response.error = "Invalid username or email";
+            return response;
         }
 
         const result = bcrypt.compareSync(data.password, res.password);
