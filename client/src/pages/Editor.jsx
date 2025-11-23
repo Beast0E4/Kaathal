@@ -8,9 +8,9 @@ import {
 } from 'lucide-react';
 import ToolbarButton from "../components/ToolbarButton";
 import { useDispatch, useSelector } from "react-redux";
-import { createBlog, uploadImage } from "../redux/slices/blog.slice";
-import { useNavigate } from "react-router-dom";
-// import axios from 'axios'; // Ensure you have axios or use fetch
+import { createBlog, getBlog, uploadImage } from "../redux/slices/blog.slice";
+import { useNavigate, useParams } from "react-router-dom";
+import { showToast } from "../redux/slices/toast.slice";
 
 function Editor() {
     const blogState = useSelector((state) => state.blog);
@@ -19,11 +19,13 @@ function Editor() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
+    const { blog_slug } = useParams ();
+
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [cover_image, setCoverImage] = useState(null);
-    const [slug, setslug] = useState("");
+    const [slug, setSlug] = useState("");
     const [tags, setTags] = useState([]);
     const [newTag, setNewTag] = useState("");
     const [status, setStatus] = useState('draft');
@@ -44,6 +46,31 @@ function Editor() {
             textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
         }
     }, [content]);
+
+    useEffect (() => {
+        getCurrentBlog ();
+    }, [])
+
+    const getCurrentBlog = async () => {
+        if (!blog_slug) return;
+
+        let res;
+
+        try {
+            res = await dispatch (getBlog (blog_slug));
+        } catch (err) {
+            dispatch(showToast ({ message: 'Blog fetch failed!', type: 'error' }));
+        }
+        finally {
+            const blog = res.payload.data.blogsData.blog;
+            console.log (blog);
+            setTitle (blog?.title);
+            setContent (blog?.content);
+            if (blog?.tags?.length > 0) setTags (blog?.tags);
+            // setCoverImage (blog?.cover_image);
+            setSlug (blog?.slug);
+        }
+    }
 
     // Formatting Logic
     const insertFormat = (type) => {
@@ -155,7 +182,8 @@ function Editor() {
         const finalSlug = slug || title.toLowerCase().replace(/\s+/g, '-');
         formData.append('slug', finalSlug);
 
-        formData.append('tags', JSON.stringify(tags));
+        tags.forEach(tag => formData.append('tags', tag));
+
 
         if (cover_image) {
             formData.append('image', cover_image);
@@ -239,11 +267,11 @@ function Editor() {
                         onClick={viewBlog}
                         className={`flex items-center gap-2 text-white px-4 py-2 rounded-full text-sm font-medium transition-all shadow-md hover:shadow-lg transform active:scale-95 ${status === 'published'
                                 ? 'bg-green-600 hover:bg-green-700'
-                                : 'bg-slate-900 hover:bg-slate-800'
+                                : 'bg-slate-600 hover:bg-slate-600'
                             }`}
                     >
-                        <Send size={16} />
-                        "View"
+                        <Eye size={16} />
+                        View
                     </button>
 
                     <button
@@ -456,7 +484,7 @@ function Editor() {
                                 <input
                                     type="text"
                                     value={slug}
-                                    onChange={(e) => setslug(e.target.value)}
+                                    onChange={(e) => setSlug(e.target.value)}
                                     placeholder={title
                                         .toLowerCase()
                                         .replace(/\s+/g, '-')}

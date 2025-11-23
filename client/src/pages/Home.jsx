@@ -2,11 +2,13 @@ import {
   Eye, Globe, ArrowRight,
   Feather, Zap,  PenTool,
 } from 'lucide-react';
+import { useSelector } from 'react-redux';
 
 import { Link } from 'react-router-dom'
 
 function Home () {
-    console.log ("hello");
+    const authState = useSelector ((state) => state.auth);
+
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-black selection:text-white flex flex-col">
       <nav className="px-6 h-20 flex items-center justify-between border-b border-gray-100 w-full">
@@ -20,6 +22,11 @@ function Home () {
           >
             Dashboard
           </Link>
+          <Link to={'/profile'}
+            className="inline-flex items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-violet-600 shadow-md"
+            >
+            <img src={authState.data?.image?.url} className='w-10 h-10'></img>
+            </Link>
         </div>
       </nav>
 

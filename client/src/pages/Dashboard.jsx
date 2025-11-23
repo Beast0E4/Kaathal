@@ -49,7 +49,7 @@ function Dashboard () {
             <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-2">Your Stories</h1>
             <p className="text-gray-500">Manage your blog blogs and drafts.</p>
           </div>
-          <Link to={'/blog'}
+          <Link to={'/blog/edit'}
             className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-full font-medium shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
           >
             <Plus size={18} /> New Story
@@ -63,7 +63,7 @@ function Dashboard () {
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No stories yet</h3>
             <p className="text-gray-500 mb-6">Create your first blog post to get started.</p>
-            <Link to={'/blog'} className="text-slate-900 font-medium hover:underline">Write a story</Link>
+            <Link to={'/blog/edit'} className="text-slate-900 font-medium hover:underline">Write a story</Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -100,7 +100,7 @@ function Dashboard () {
                 
                 <div className="text-xs text-gray-400 pt-4 border-t border-gray-50 flex justify-between items-center">
                   <span>{blog.createdAt ? new Date(blog.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}</span>
-                  <span className="flex items-center gap-1 group-hover:text-slate-900 transition-colors">Edit <ArrowRight size={12} /></span>
+                  <Link to={`/blog/edit/${blog?.slug}`} className="flex items-center gap-1 group-hover:text-slate-900 transition-colors">Edit <ArrowRight size={12} /></Link>
                 </div>
               </div>
             ))}

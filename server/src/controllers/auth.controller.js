@@ -35,6 +35,21 @@ const signin = async(req,res) => {
     })
 }
 
+const updateUser = async (req,res) =>  {
+        const response  = await userService.updateUser(req.body, req.file?.path);
+
+        if(response.error){
+            return res.status(StatusCodes.BAD_REQUEST).send({
+                message : "Signup failed",
+                error : response.error
+            })
+        }
+        return res.status(StatusCodes.CREATED).send({
+            message : "Successfully created the account",
+            userData: response
+        })
+};
+
 module.exports = {
-    signup, signin
+    signup, signin, updateUser
 }

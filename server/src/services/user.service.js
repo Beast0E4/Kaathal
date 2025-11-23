@@ -64,6 +64,33 @@ const validateUser = async (data) => {
     }
 };
 
+const updateUser = async (data, path) => { 
+    const response = {};
+    try {
+        console.log (data, path);
+        const userData = await User.findById(data.userId);
+        if (!userData) {
+            response.error = "User not found!";
+            return response;
+        }
+
+        if (path) data = {...data, image: {
+            url: path,
+            filename: "image"}};
+
+        const updatedUser = await User.findByIdAndUpdate(
+            data.userId, 
+            data,
+            {new : true}
+        )
+        response.user = updatedUser;
+        return response;
+    } catch (error) {
+        response.error = error.message;
+        return response
+    }
+};
+
 module.exports = {
-    createUser, validateUser
+    createUser, validateUser, updateUser
 }

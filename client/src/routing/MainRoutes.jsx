@@ -8,6 +8,7 @@ import Preview from "../pages/Preview";
 import Editor from "../pages/Editor";
 import Login from "../pages/Login/Login";
 import SignUp from "../pages/Signup/Signup";
+import Profile from "../pages/Profile/Profile";
 
 function MainRoutes() {
   return (
@@ -18,7 +19,9 @@ function MainRoutes() {
             <Route path="/create-account" element={<SignUp />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/blog/:slug" element={<Preview />} />
-            <Route path="/blog" element={<Editor />} />
+            <Route path="/blog/edit/:blog_slug" element={<Editor />} />
+            <Route path="/blog/edit" element={<Editor />} />
+            <Route path="/profile" element={<Profile />} />
         </Routes>
     </>
   );
