@@ -71,4 +71,19 @@ const uploadImage = async(req, res) => {
     })
 }
 
-module.exports = { createBlog, get_blog, getAllBlogs, deleteBlog, uploadImage }
+const updateBlog = async (req,res) =>  {
+        const response  = await blogService.updateBlog(req.body, req.file?.path);
+
+        if(response.error){
+            return res.status(StatusCodes.BAD_REQUEST).send({
+                message : "Signup failed",
+                error : response.error
+            })
+        }
+        return res.status(StatusCodes.CREATED).send({
+            message : "Successfully created the account",
+            blogsData: response
+        })
+};
+
+module.exports = { createBlog, get_blog, getAllBlogs, deleteBlog, uploadImage, updateBlog }

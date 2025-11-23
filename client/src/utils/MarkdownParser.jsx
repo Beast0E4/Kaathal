@@ -35,7 +35,7 @@ export function parseMarkdown (text) {
         return (
             <figure key={lineIndex} className="my-10 group">
                 <img src={imgMatch[2]} alt={imgMatch[1]} className="w-full rounded-xl shadow-sm border border-gray-100" />
-                {imgMatch[1] && <figcaption className="text-center text-sm text-gray-500 mt-3">{imgMatch[1]}</figcaption>}
+                {/* {imgMatch[1] && <figcaption className="text-center text-sm text-gray-500 mt-3">{imgMatch[1]}</figcaption>} */}
             </figure>
         );
     }

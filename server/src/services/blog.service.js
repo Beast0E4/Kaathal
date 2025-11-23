@@ -20,7 +20,7 @@ const createBlog = async (data, path) => {
 const get_blog = async (data) => {
     const response = {};
     try {
-        const blog = await Blog.findOne ({ slug: data.slug });
+        const blog = await Blog.findOne ({ slug: data.slug }).populate("userId", "id username image");
 
         if (!blog) {
             response.error = "Blog not created";
@@ -68,6 +68,32 @@ const deleteBlog = async (data) => {
     return response;  
 };
 
+const updateBlog = async (data, path) => { 
+    const response = {};
+    try {
+        const blogData = await Blog.find({slug: data.slug});
+        if (!blogData) {
+            response.error = "Blog not found!";
+            return response;
+        }
+
+        if (path) data = {...data, cover_image: {
+            url: path,
+            filename: "image"}};
+
+        const updatedBlog = await Blog.findOneAndUpdate(
+            {slug: data.slug}, 
+            data,
+            {new : true}
+        )
+        response.blog = updatedBlog;
+        return response;
+    } catch (error) {
+        response.error = error.message;
+        return response
+    }
+};
+
 module.exports = {
-    createBlog, get_blog, getAllBlogs, deleteBlog
+    createBlog, get_blog, getAllBlogs, deleteBlog, updateBlog
 }

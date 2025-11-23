@@ -81,6 +81,20 @@ export const deleteBlog = createAsyncThunk('Blog/deleteBlog', async (slug, { dis
     }
 });
 
+export const updateBlog = createAsyncThunk('/blog/updateBlog', async (data, { dispatch }) =>  {     
+    try {
+        const response = await axiosInstance.patch(`blog/`, data, {
+            headers: {
+                'x-access-token': localStorage.getItem('token')
+            }
+        });
+        if(!response) dispatch (showToast ({ message: "Something went wrong, try again!", type: 'error' }));
+        return  response;
+    } catch (error) {
+        dispatch (showToast ({ message: error.response.data.error || "An error occurred!", type: 'error' }));
+    }
+});
+
 const BlogSlice = createSlice({
     name: 'blog',
     initialState,

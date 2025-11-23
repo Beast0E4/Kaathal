@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { parseMarkdown } from "../utils/MarkdownParser";
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useDispatch } from "react-redux";
 import { getBlog } from "../redux/slices/blog.slice";
 import { showToast } from "../redux/slices/toast.slice"
@@ -36,9 +36,9 @@ function Preview () {
         <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-sm font-sans text-gray-500 hover:text-slate-900 transition-colors">
           <ChevronLeft size={16} /> Back to Dashboard
         </button>
-        <button onClick={() => navigate('/editor', { id: blog?._id })} className="flex items-center gap-2 text-sm font-sans bg-slate-900 text-white px-4 py-2 rounded-full hover:bg-slate-800">
+        <Link to={`/blog/edit/${blog?.slug}`} className="flex items-center gap-2 text-sm font-sans bg-slate-900 text-white px-4 py-2 rounded-full hover:bg-slate-800">
           <Edit3 size={14} /> Edit this blog
-        </button>
+        </Link>
       </nav>
 
       <article className="pt-24 pb-32">
@@ -50,21 +50,31 @@ function Preview () {
           )}
           
           <div className="mb-12 text-center">
-             <div className="flex justify-center gap-2 mb-6">
+             {blog?.tags?.length > 0 && <div className="flex justify-center gap-2 mb-6">
                 {blog?.tags && blog?.tags.map(tag => (
                   <span key={tag} className="text-xs font-sans uppercase tracking-widest text-gray-500 border border-gray-200 px-3 py-1 rounded-full">{tag}</span>
                 ))}
-             </div>
+             </div>}
              <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">{blog?.title}</h1>
              <div className="flex items-center justify-center gap-4 font-sans text-sm text-gray-500">
                <div className="flex items-center gap-2">
-                 {/* <div className="w-8 h-8 bg-gray-200 rounded-full overflow-hidden">
-                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`} alt="Author" />
-                 </div> */}
-                 <span>Author</span>
+                 <div className="w-8 h-8 bg-gray-200 rounded-full overflow-hidden">
+                    <img src={blog?.userId?.image?.url} alt="Author" />
+                 </div>
+                 <span>{blog?.userId?.username}</span>
                </div>
                <span>•</span>
-               <span>{blog?.updatedAt ? new Date(blog?.updatedAt.seconds * 1000).toLocaleDateString() : 'Unknown Date'}</span>
+               <span>
+                {blog?.createdAt
+                    ? new Date(blog.createdAt).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                    })
+                    : 'Unknown Date'}
+                </span>
+
+
              </div>
           </div>
 

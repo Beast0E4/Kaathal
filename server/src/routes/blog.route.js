@@ -10,5 +10,6 @@ blogRoutes.get('/:slug', isUserAuthenticated, blogController.get_blog);
 blogRoutes.get('/', isUserAuthenticated, blogController.getAllBlogs);
 blogRoutes.delete('/:slug', isUserAuthenticated, blogController.deleteBlog);
 blogRoutes.post('/uploadImage', isUserAuthenticated, uploadSingleImage, blogController.uploadImage);
+blogRoutes.patch ('/', isUserAuthenticated, uploadSingleImage, blogController.updateBlog);
 
 module.exports = blogRoutes
