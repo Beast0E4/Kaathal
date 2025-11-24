@@ -42,11 +42,8 @@ function Preview () {
     >
       {/* 3. Updated Navbar to match background with 90% opacity (CC hex) */}
       <nav 
-        className="fixed top-0 w-full backdrop-blur-md border-b border-gray-100/50 z-50 px-6 h-16 flex items-center justify-between transition-colors duration-500"
+        className="fixed top-0 w-full backdrop-blur-md border-b border-gray-100/50 z-50 px-6 h-16 flex items-center justify-end transition-colors duration-500"
       >
-        <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-sm font-sans text-gray-500 hover:text-slate-900 transition-colors">
-          <ChevronLeft size={16} /> Back to Dashboard
-        </button>
         <Link to={`/blog/edit/${blog?.slug}`} className="flex items-center gap-2 text-sm font-sans bg-slate-900 text-white px-4 py-2 rounded-full hover:bg-slate-800">
           <Edit3 size={14} /> Edit this blog
         </Link>

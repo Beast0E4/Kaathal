@@ -1,4 +1,4 @@
-import { Quote, ExternalLink } from 'lucide-react';
+import { Quote } from 'lucide-react';
 
 /**
  * Internal helper to parse inline styles:
@@ -22,7 +22,7 @@ const parseInline = (text) => {
         <mark 
           key={index} 
           style={{ backgroundColor: color, color: 'inherit' }} 
-          className="px-0.5 rounded-sm"
+          className="px-0.5 rounded-sm decoration-clone box-decoration-clone"
         >
           {parseStandardFormatting(content)}
         </mark>
@@ -40,7 +40,7 @@ const parseStandardFormatting = (text) => {
 
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
+      return <strong key={i} className="font-bold text-slate-900">{part.slice(2, -2)}</strong>;
     }
     
     // 2. Split by Italic (_)
@@ -64,9 +64,11 @@ const parseStandardFormatting = (text) => {
                     href={linkUrl} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-blue-700 text-[1rem] hover:text-blue-900 hover:underline decoration-blue-300 underline-offset-2 transition-colors cursor-pointer break-words"
+                    // Responsive text size and word breaking for mobile safety
+                    className="text-blue-700 hover:text-blue-900 hover:underline decoration-blue-300 underline-offset-2 transition-colors cursor-pointer break-words"
                 >
-                    {linkUrl}
+                    {/* Display linkText if available, otherwise display the URL */}
+                    {linkText || linkUrl}
                 </a>
             );
         }
@@ -88,37 +90,57 @@ export function parseMarkdown(text) {
     // 1. Blockquote (> text)
     if (trimmed.startsWith('> ')) {
       return (
-        <blockquote key={lineIndex} className="border-l-4 border-slate-900 pl-6 my-6 italic text-xl text-gray-700 bg-gray-50 py-4 pr-4 rounded-r-lg">
-          <Quote size={24} className="text-gray-300 mb-2" />
-          {parseInline(trimmed.replace('> ', ''))}
+        <blockquote key={lineIndex} className="border-l-4 border-slate-900 bg-gray-50 rounded-r-lg text-gray-700 italic my-6 pl-4 py-3 pr-3 text-lg sm:pl-6 sm:py-4 sm:pr-4 sm:text-xl">
+          <Quote className="text-gray-300 mb-2 w-5 h-5 sm:w-6 sm:h-6" />
+          <div className="leading-relaxed">
+             {parseInline(trimmed.replace('> ', ''))}
+          </div>
         </blockquote>
       );
     }
 
     // 2. List Items (- text)
     if (trimmed.startsWith('- ')) {
-      return <li key={lineIndex} className="ml-6 list-disc mb-2 text-xl text-gray-800 leading-relaxed">{parseInline(trimmed.replace('- ', ''))}</li>;
+      return (
+        <li key={lineIndex} className="list-disc text-gray-800 leading-relaxed mb-2 ml-4 text-lg sm:ml-6 sm:text-xl">
+            {parseInline(trimmed.replace('- ', ''))}
+        </li>
+      );
     }
 
     // 3. Headings (## text)
     if (trimmed.startsWith('## ')) {
-      return <h2 key={lineIndex} className="text-3xl font-bold mt-10 mb-4 text-slate-900 tracking-tight">{parseInline(trimmed.replace('## ', ''))}</h2>;
+      return (
+        <h2 key={lineIndex} className="font-bold text-slate-900 tracking-tight leading-tight mt-8 mb-3 text-2xl sm:mt-10 sm:mb-4 sm:text-3xl">
+            {parseInline(trimmed.replace('## ', ''))}
+        </h2>
+      );
     }
 
     // 4. Images ( ![alt](url) )
     const imgMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/);
     if (imgMatch) {
       return (
-        <figure key={lineIndex} className="my-8 group">
-          <img src={imgMatch[2]} alt={imgMatch[1]} className="w-full rounded-xl shadow-sm border border-gray-100" />
+        <figure key={lineIndex} className="group my-6 sm:my-8">
+          <img 
+            src={imgMatch[2]} 
+            alt={imgMatch[1]} 
+            className="w-full rounded-xl shadow-sm border border-gray-100 object-cover" 
+            loading="lazy"
+          />
+          {imgMatch[1] && <figcaption className="text-center text-xs sm:text-sm text-gray-500 mt-2">{imgMatch[1]}</figcaption>}
         </figure>
       );
     }
 
     // 5. Standard Paragraph
-    if (trimmed === '') return <br key={lineIndex} className="" />;
+    if (trimmed === '') return <div key={lineIndex} className="h-4 sm:h-6" />;
     
-    // UPDATED: Reduced margins (mb-4) and line-height (leading-relaxed) for tighter fit
-    return <p key={lineIndex} className="mb-4 leading-relaxed text-xl text-gray-800">{parseInline(line)}</p>;
+    // Default text: Text-lg on mobile, Text-xl on desktop
+    return (
+        <p key={lineIndex} className="leading-relaxed text-gray-800 mb-4 text-lg sm:mb-5 sm:text-xl">
+            {parseInline(line)}
+        </p>
+    );
   });
 };

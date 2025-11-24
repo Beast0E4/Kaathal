@@ -54,7 +54,6 @@ function Dashboard () {
          <div className="flex items-center gap-2 font-bold text-xl cursor-pointer" onClick={() => navigate('/')}>
             <Feather size={18} /> Kaathal.
          </div>
-         <div className="text-sm text-gray-500">Dashboard</div>
       </nav>
 
       {/* Main Content: Adjusted padding */}
@@ -97,7 +96,7 @@ function Dashboard () {
                   </span>
                   
                   {/* Action Buttons: Visible by default on mobile (opacity-100), hidden until hover on desktop (sm:opacity-0) */}
-                  <div className="flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                  <div className="flex gap-2 opacity-100 sm:group-hover:opacity-100 transition-opacity">
                     <Link to={`/blog/${blog.slug}`}
                       className="p-2 hover:bg-gray-100 rounded-full text-gray-500 hover:text-blue-600"
                       title="View Live Page"
@@ -123,7 +122,13 @@ function Dashboard () {
                 </p>
                 
                 <div className="text-xs text-gray-400 pt-4 border-t border-gray-50 flex justify-between items-center">
-                  <span>{blog.createdAt ? new Date(blog.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}</span>
+                  <span>{blog?.createdAt
+                    ? new Date(blog.createdAt).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                    })
+                    : 'Unknown Date'}</span>
                   <Link to={`/blog/edit/${blog?.slug}`} className="flex items-center gap-1 group-hover:text-slate-900 transition-colors">Edit <ArrowRight size={12} /></Link>
                 </div>
               </div>

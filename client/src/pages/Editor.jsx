@@ -21,7 +21,7 @@ function Editor() {
     const navigate = useNavigate();
     const { blog_slug } = useParams();
 
-    // Initialize sidebar based on screen size (closed on mobile by default)
+    // Initialize sidebar: Open on desktop (>1024px), Closed on mobile
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024);
     
     const [title, setTitle] = useState("");
@@ -59,7 +59,7 @@ function Editor() {
     useEffect(() => {
         getCurrentBlog();
         
-        // Handle resize events to auto-close sidebar on small screens if needed
+        // Handle resize events
         const handleResize = () => {
             if (window.innerWidth < 1024) setIsSidebarOpen(false);
             else setIsSidebarOpen(true);
@@ -78,20 +78,19 @@ function Editor() {
             dispatch(showToast({ message: 'Blog fetch failed!', type: 'error' }));
         }
         finally {
-            const blog = res.payload.data.blogsData.blog;
-            setTitle(blog?.title);
-            setContent(blog?.content);
-            if (blog?.tags?.length > 0) setTags(blog?.tags);
-            const image = blog?.cover_image?.url || blog?.cover_image;
-            setCoverImage(image);
-            setSlug(blog?.slug);
-            if(blog?.theme?.background) setPageBgColor(blog.theme.background);
+            const blog = res.payload?.data?.blogsData?.blog;
+            if(blog) {
+                setTitle(blog.title);
+                setContent(blog.content);
+                if (blog.tags?.length > 0) setTags(blog.tags);
+                const image = blog.cover_image?.url || blog.cover_image;
+                setCoverImage(image);
+                setSlug(blog.slug);
+                if(blog.theme?.background) setPageBgColor(blog.theme.background);
+            }
         }
     }
 
-    // ... (Keep existing insertFormat, confirmUrlInput, confirmLinkInput, upload logic unchanged) ...
-    // Note: Re-pasting the logic here for completeness as requested by "make it responsive"
-    
     const insertFormat = (type) => {
         if (!textareaRef.current) return;
         const start = textareaRef.current.selectionStart;
@@ -204,7 +203,7 @@ function Editor() {
         }
     };
 
-    const handleSave = async () => {
+    const handleSave = async (currentStatus = status) => {
         setSaveStatus('saving');
         const formData = new FormData();
         formData.append('userId', authState.data?._id);
@@ -240,12 +239,12 @@ function Editor() {
 
     const handleTitleChange = (e) => {
         const value = e.target.value;
-        setTitle(value);  
-        setSlug (value.toLowerCase().trim().replace(/\s+/g, '-').slice(0, 10));
+        setTitle(value);   
+        setSlug(value.toLowerCase().trim().replace(/\s+/g, '-').slice(0, 50));
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 text-slate-800 font-sans flex flex-col relative overflow-hidden">
+        <div className="flex flex-col h-screen overflow-hidden bg-gray-50 text-slate-800 font-sans">
             <style>{`
                 ::selection {
                     background-color: ${highlightColor}80 !important; 
@@ -261,182 +260,205 @@ function Editor() {
                 }
             `}</style>
 
-            <nav className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 sticky top-0 z-50 shadow-sm shrink-0">
+            {/* --- TOP NAVIGATION BAR --- */}
+            <nav className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-3 sm:px-6 sticky top-0 z-40 shrink-0">
                 <div className="flex items-center gap-2 sm:gap-4">
                     <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors">
                         <ChevronLeft size={20} />
                     </button>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <span className="font-medium text-gray-900 hidden md:inline">Personal Studio</span>
-                        <span className="text-gray-300 hidden md:inline">/</span>
-                        <span className="truncate max-w-[100px] sm:max-w-[150px]">{title || "Untitled Story"}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2 text-sm text-gray-500">
+                        <span className="font-medium text-gray-900 hidden sm:inline">Studio</span>
+                        <span className="text-gray-300 hidden sm:inline">/</span>
+                        <span className="truncate max-w-[120px] sm:max-w-[200px] font-medium sm:font-normal">{title || "Untitled"}</span>
                     </div>
-                    <div className="flex items-center gap-2 ml-2 sm:ml-4 text-xs">
+                    <div className="text-xs ml-2">
                         {saveStatus === 'saved' && <span className="text-gray-400 flex items-center gap-1"><CheckCircle2 size={12} /> <span className="hidden sm:inline">Saved</span></span>}
                         {saveStatus === 'saving' && <span className="text-blue-500 animate-pulse">Saving...</span>}
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 sm:gap-3">
-                    <button onClick={() => handleSave(status)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg hidden sm:block">
+                <div className="flex items-center gap-2">
+                    <button onClick={() => handleSave()} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg hidden sm:block" title="Save Draft">
                         <Save size={20} />
                     </button>
-                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`p-2 text-gray-500 hover:bg-gray-100 rounded-lg relative z-50 ${isSidebarOpen ? 'bg-gray-100' : ''}`}>
+                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`p-2 text-gray-500 hover:bg-gray-100 rounded-lg ${isSidebarOpen ? 'bg-gray-100' : ''}`}>
                         {isSidebarOpen ? <PanelLeftClose size={20} /> : <Settings size={20} />}
                     </button>
-                    {/* Condensed buttons for mobile */}
-                    <button onClick={viewBlog} className={`flex items-center justify-center sm:gap-2 text-white w-9 h-9 sm:w-auto sm:px-4 sm:py-2 rounded-full text-sm font-medium transition-all shadow-md hover:shadow-lg transform active:scale-95 ${status === 'published' ? 'bg-green-600 hover:bg-green-700' : 'bg-slate-600 hover:bg-slate-600'}`}>
-                        <Eye size={16} /> <span className="hidden sm:inline">View</span>
+                    <button onClick={viewBlog} className="flex items-center justify-center sm:gap-2 bg-slate-100 text-slate-700 w-9 h-9 sm:w-auto sm:px-4 sm:py-2 rounded-full text-sm font-medium hover:bg-slate-200 transition-all">
+                        <Eye size={18} /> <span className="hidden sm:inline">Preview</span>
                     </button>
-                    <button onClick={() => handleSave()} className={`flex items-center justify-center sm:gap-2 text-white w-9 h-9 sm:w-auto sm:px-4 sm:py-2 rounded-full text-sm font-medium transition-all shadow-md hover:shadow-lg transform active:scale-95 ${status === 'published' ? 'bg-green-600 hover:bg-green-700' : 'bg-slate-900 hover:bg-slate-800'}`}>
+                    <button onClick={() => handleSave()} className="flex items-center justify-center sm:gap-2 bg-black text-white w-9 h-9 sm:w-auto sm:px-4 sm:py-2 rounded-full text-sm font-medium hover:bg-gray-800 transition-all shadow-lg">
                         <Send size={16} /> <span className="hidden sm:inline">{blog_slug ? 'Update' : 'Publish'}</span>
                     </button>
                 </div>
             </nav>
 
-            <div className="flex flex-1 overflow-hidden relative">
-                <main className={`flex-1 overflow-y-auto relative transition-all duration-300 ${isSidebarOpen ? 'lg:mr-80' : ''}`}>
-                    <div 
-                        className="max-w-3xl mx-auto py-8 px-4 sm:px-8 min-h-[calc(100vh-4rem)] sm:my-8 sm:rounded-xl shadow-none sm:shadow-sm border-x-0 sm:border border-gray-100 relative transition-colors duration-300"
-                    >
-                        {/* COVER IMAGE */}
+            {/* --- MAIN EDITOR AREA --- */}
+            <div className="flex flex-1 relative overflow-hidden">
+                <main 
+                    className="flex-1 overflow-y-auto h-full scroll-smooth" 
+                    style={{ backgroundColor: pageBgColor }}
+                >
+                    <div className={`max-w-3xl mx-auto py-6 px-4 sm:px-8 sm:py-10 transition-all duration-300 ${isSidebarOpen ? 'lg:mr-80' : ''} pb-32`}>
+                        
+                        {/* Cover Image Uploader */}
                         {!cover_image ? (
-                            <div className="group relative h-24 sm:h-32 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-all cursor-pointer mb-6 sm:mb-8 overflow-hidden">
+                            <div className="group relative h-32 sm:h-52 bg-gray-50/50 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:border-gray-500 hover:text-gray-600 transition-all cursor-pointer mb-6 overflow-hidden">
                                 <div className="flex flex-col items-center gap-2">
-                                    <ImageIcon size={20} />
-                                    <span className="text-xs sm:text-sm font-medium">Add Cover Image</span>
+                                    <ImageIcon size={24} />
+                                    <span className="text-sm font-medium">Add Cover</span>
                                 </div>
                                 <input
                                     type="file"
                                     className="absolute inset-0 opacity-0 cursor-pointer"
                                     onChange={handleCoverImageUpload}
                                     accept="image/*"
-                                    encType="multipart/form-data"
                                 />
                             </div>
                         ) : (
-                            <div className="relative h-48 sm:h-64 w-full mb-6 sm:mb-8 rounded-xl overflow-hidden group">
+                            <div className="relative h-48 sm:h-72 w-full mb-8 rounded-xl overflow-hidden group shadow-sm">
                                 <img
                                     src={typeof cover_image === 'string' ? cover_image : URL.createObjectURL(cover_image)}
                                     alt="Cover"
                                     className="w-full h-full object-cover"
                                 />
-                                <div className="absolute top-4 right-4 flex gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => coverInputRef.current.click()} className="bg-white/90 p-2 rounded-full text-gray-600 shadow-md hover:text-blue-600 transition-colors" title="Change Cover Image">
-                                        <ImagePlus size={18} />
+                                <div className="absolute top-2 right-2 flex gap-2">
+                                    <button onClick={() => coverInputRef.current.click()} className="bg-white/90 p-2 rounded-full text-gray-700 shadow-md hover:text-blue-600">
+                                        <ImagePlus size={16} />
                                     </button>
-                                    <button onClick={() => setCoverImage(null)} className="bg-white/90 p-2 rounded-full text-gray-600 shadow-md hover:text-red-500 transition-colors" title="Remove Cover Image">
-                                        <X size={18} />
+                                    <button onClick={() => setCoverImage(null)} className="bg-white/90 p-2 rounded-full text-gray-700 shadow-md hover:text-red-500">
+                                        <X size={16} />
                                     </button>
                                 </div>
-                                <input
-                                    ref={coverInputRef}
-                                    type="file"
-                                    className="hidden"
-                                    onChange={handleCoverImageUpload}
-                                    accept="image/*"
-                                    encType="multipart/form-data"
-                                />
+                                <input ref={coverInputRef} type="file" className="hidden" onChange={handleCoverImageUpload} accept="image/*" />
                             </div>
                         )}
 
-                        <input type="text" value={title} onChange={handleTitleChange} placeholder="Post Title..." className="w-full text-3xl sm:text-5xl font-bold text-slate-900 placeholder-gray-300 border-none focus:ring-0 focus:outline-none mb-4 sm:mb-6 tracking-tight leading-tight bg-transparent" />
+                        {/* Title Input */}
+                        <input 
+                            type="text" 
+                            value={title} 
+                            onChange={handleTitleChange} 
+                            placeholder="Post Title..." 
+                            className="w-full text-3xl sm:text-5xl font-bold text-slate-900 placeholder-gray-300 border-none focus:ring-0 focus:outline-none mb-4 tracking-tight leading-tight bg-transparent" 
+                        />
 
-                        {/* SCROLLABLE TOOLBAR */}
-                        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md py-3 border-b border-gray-100 mb-6 flex items-center gap-1 rounded-lg overflow-x-auto no-scrollbar">
-                            <div className="flex items-center shrink-0">
+                        {/* Sticky Toolbar */}
+                        <div className="sticky top-0 z-30 bg-white/90 backdrop-blur-sm py-2 sm:py-3 border-b border-gray-100 mb-6 flex items-center gap-1 rounded-xl overflow-x-auto no-scrollbar shadow-sm px-1">
+                            <div className="flex items-center shrink-0 pr-4">
                                 <ToolbarButton title={'Bold'} icon={<Bold size={18} />} onClick={() => insertFormat('bold')} />
                                 <ToolbarButton title={'Italic'} icon={<Italic size={18} />} onClick={() => insertFormat('italic')} />
                                 
-                                <div className="flex items-center bg-gray-100 rounded-lg mx-1 pr-1 border border-gray-200">
+                                <div className="flex items-center bg-gray-100 rounded-lg mx-1 px-1 border border-gray-200">
                                     <ToolbarButton title={'Highlight'} icon={<Highlighter size={18} />} onClick={() => insertFormat('highlight')} />
                                     <div className="h-4 w-px bg-gray-300 mx-1"></div>
                                     <input 
                                         type="color" 
                                         value={highlightColor} 
                                         onChange={(e) => setHighlightColor(e.target.value)} 
-                                        className="w-6 h-6 rounded cursor-pointer border-none p-0 bg-transparent" 
-                                        title="Choose highlight color"
+                                        className="w-5 h-5 rounded cursor-pointer border-none p-0 bg-transparent" 
                                     />
                                 </div>
 
-                                <div className="w-px h-5 bg-gray-200 mx-2" />
+                                <div className="w-px h-5 bg-gray-200 mx-1 sm:mx-2" />
                                 <ToolbarButton title={'Heading'} icon={<Type size={18} />} onClick={() => insertFormat('h2')} />
                                 <ToolbarButton title={'Quote'} icon={<Quote size={18} />} onClick={() => insertFormat('quote')} />
                                 <ToolbarButton title={'List'} icon={<List size={18} />} onClick={() => insertFormat('list')} />
-                                <div className="w-px h-5 bg-gray-200 mx-2" />
+                                <div className="w-px h-5 bg-gray-200 mx-1 sm:mx-2" />
                                 <ToolbarButton title={'Link'} icon={<LinkIcon size={18} />} onClick={() => insertFormat('link')} />
                                 <ToolbarButton title={'Image'} icon={<ImagePlus size={18} />} onClick={() => insertFormat('image')} />
                             </div>
                             
-                            <button className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 text-purple-600 rounded-md text-xs font-medium hover:bg-purple-100 transition-colors ml-auto shrink-0">
+                            <button className="flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-600 rounded-md text-xs font-medium hover:bg-purple-100 transition-colors ml-auto shrink-0 whitespace-nowrap">
                                 <Sparkles size={14} /> <span className="hidden sm:inline">AI Assist</span>
                             </button>
                         </div>
 
-                        {/* Image URL Input Modal (Responsive) */}
-                        {showUrlInput && (
-                            <div className="absolute top-24 left-0 right-0 mx-auto w-[90%] max-w-md bg-white p-4 shadow-2xl rounded-xl border border-gray-200 z-20 animate-in fade-in zoom-in duration-200">
-                                <h3 className="font-bold text-sm mb-3">Insert Image</h3>
-                                {/* ... existing image modal content ... */}
-                                <div className="mb-4">
-                                    <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors relative overflow-hidden ${isUploadingImage ? 'opacity-50 pointer-events-none' : ''}`}>
-                                        {isUploadingImage ? (
-                                            <div className="flex flex-col items-center justify-center pt-5 pb-6"><span className="text-sm text-gray-500 animate-pulse">Uploading...</span></div>
-                                        ) : tempUrl ? (
-                                            <img src={tempUrl} alt="Preview" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                <UploadCloud className="w-6 h-6 mb-1 text-gray-400" />
-                                                <p className="text-xs text-gray-500"><span className="font-semibold">Upload</span></p>
-                                            </div>
-                                        )}
-                                        <input type="file" className="hidden" accept="image/*" encType="multipart/form-data" onChange={handleImageFileUpload} />
-                                    </label>
-                                </div>
-                                <div className="relative flex items-center mb-3">
-                                    <div className="flex-grow border-t border-gray-200"></div>
-                                    <span className="flex-shrink-0 mx-2 text-xs text-gray-400 uppercase">Or paste link</span>
-                                    <div className="flex-grow border-t border-gray-200"></div>
-                                </div>
-                                <input autoFocus type="text" placeholder="https://..." className="w-full border border-gray-300 rounded-md p-2 text-sm mb-3 outline-none focus:border-black transition-colors" value={tempUrl} onChange={(e) => setTempUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && confirmUrlInput()} />
-                                <div className="flex justify-end gap-2">
-                                    <button onClick={() => { setShowUrlInput(false); setTempUrl(''); }} className="px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100 rounded-md">Cancel</button>
-                                    <button onClick={confirmUrlInput} className="px-3 py-1.5 text-xs font-medium bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50" disabled={!tempUrl}>Add</button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Link Input Modal (Responsive) */}
-                        {showLinkInput && (
-                            <div className="absolute top-24 left-0 right-0 mx-auto w-[90%] max-w-md bg-white p-4 shadow-2xl rounded-xl border border-gray-200 z-20 animate-in fade-in zoom-in duration-200">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <div className="bg-blue-50 p-1.5 rounded-full text-blue-600">
-                                        <LinkIcon size={16} />
-                                    </div>
-                                    <h3 className="font-bold text-sm">Add Link</h3>
-                                </div>
-                                <input 
-                                    autoFocus 
-                                    type="url" 
-                                    placeholder="https://site.com" 
-                                    className="w-full border border-gray-300 rounded-md p-2 text-sm mb-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all" 
-                                    value={tempLink} 
-                                    onChange={(e) => setTempLink(e.target.value)} 
-                                    onKeyDown={(e) => e.key === 'Enter' && confirmLinkInput()} 
-                                />
-                                <div className="flex justify-end gap-2">
-                                    <button onClick={() => { setShowLinkInput(false); setTempLink(''); }} className="px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100 rounded-md">Cancel</button>
-                                    <button onClick={confirmLinkInput} className="px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 shadow-sm" disabled={!tempLink}>Save</button>
-                                </div>
-                            </div>
-                        )}
-
-                        <textarea ref={textareaRef} value={content} onChange={(e) => setContent(e.target.value)} placeholder="Tell your story..." className="w-full resize-none text-lg sm:text-xl leading-relaxed text-gray-700 border-none focus:ring-0 focus:outline-none min-h-[400px] font-serif bg-transparent" spellCheck={false} />
+                        {/* Main Content Textarea */}
+                        <textarea 
+                            ref={textareaRef} 
+                            value={content} 
+                            onChange={(e) => setContent(e.target.value)} 
+                            placeholder="Tell your story..." 
+                            className="w-full resize-none text-lg sm:text-xl leading-relaxed text-gray-700 border-none focus:ring-0 focus:outline-none min-h-[50vh] font-serif bg-transparent" 
+                            spellCheck={false} 
+                        />
                     </div>
                 </main>
 
-                {/* Mobile Backdrop for Sidebar */}
+                {/* --- RESPONSIVE MODALS (Fixed positioning for mobile) --- */}
+                
+                {/* Image URL Modal */}
+                {showUrlInput && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                        <div className="bg-white w-full max-w-md p-5 rounded-2xl shadow-2xl">
+                            <h3 className="font-bold text-gray-900 mb-4">Add Image</h3>
+                            
+                            {/* Upload Area */}
+                            <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors relative mb-4 ${isUploadingImage ? 'opacity-50 pointer-events-none' : ''}`}>
+                                {isUploadingImage ? (
+                                    <span className="text-sm text-blue-500 font-medium animate-pulse">Uploading...</span>
+                                ) : tempUrl ? (
+                                    <img src={tempUrl} alt="Preview" className="w-full h-full object-contain rounded-lg" />
+                                ) : (
+                                    <div className="flex flex-col items-center text-gray-400">
+                                        <UploadCloud className="w-8 h-8 mb-2" />
+                                        <span className="text-xs font-semibold uppercase">Click to Upload</span>
+                                    </div>
+                                )}
+                                <input type="file" className="hidden" accept="image/*" onChange={handleImageFileUpload} />
+                            </label>
+
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="h-px bg-gray-200 flex-1"></div>
+                                <span className="text-xs text-gray-400 font-medium uppercase">Or paste URL</span>
+                                <div className="h-px bg-gray-200 flex-1"></div>
+                            </div>
+
+                            <input 
+                                autoFocus 
+                                type="text" 
+                                placeholder="https://..." 
+                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4 outline-none focus:border-black focus:ring-1 focus:ring-black transition-all" 
+                                value={tempUrl} 
+                                onChange={(e) => setTempUrl(e.target.value)} 
+                                onKeyDown={(e) => e.key === 'Enter' && confirmUrlInput()} 
+                            />
+                            
+                            <div className="flex justify-end gap-2">
+                                <button onClick={() => { setShowUrlInput(false); setTempUrl(''); }} className="px-4 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 rounded-lg">Cancel</button>
+                                <button onClick={confirmUrlInput} disabled={!tempUrl} className="px-4 py-2 text-sm font-medium bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed">Insert Image</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Link Modal */}
+                {showLinkInput && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                        <div className="bg-white w-full max-w-sm p-5 rounded-2xl shadow-2xl">
+                            <div className="flex items-center gap-2 mb-4">
+                                <div className="bg-blue-50 p-2 rounded-full text-blue-600"><LinkIcon size={18} /></div>
+                                <h3 className="font-bold text-gray-900">Add Link</h3>
+                            </div>
+                            <input 
+                                autoFocus 
+                                type="url" 
+                                placeholder="https://example.com" 
+                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all" 
+                                value={tempLink} 
+                                onChange={(e) => setTempLink(e.target.value)} 
+                                onKeyDown={(e) => e.key === 'Enter' && confirmLinkInput()} 
+                            />
+                            <div className="flex justify-end gap-2">
+                                <button onClick={() => { setShowLinkInput(false); setTempLink(''); }} className="px-4 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 rounded-lg">Cancel</button>
+                                <button onClick={confirmLinkInput} disabled={!tempLink} className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">Add Link</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- SIDEBAR OVERLAY (Mobile) --- */}
                 {isSidebarOpen && (
                     <div 
                         className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 lg:hidden"
@@ -444,71 +466,83 @@ function Editor() {
                     />
                 )}
 
-                {/* Responsive Sidebar */}
-                <aside className={`bg-white border-l border-gray-100 w-full sm:w-80 transition-transform duration-300 ease-in-out flex flex-col overflow-y-auto absolute right-0 top-0 h-full z-40 shadow-2xl ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                {/* --- SIDEBAR SETTINGS --- */}
+                <aside className={`
+                    fixed lg:absolute right-0 top-0 h-full bg-white border-l border-gray-100 
+                    w-[85vw] sm:w-80 
+                    z-40 shadow-2xl lg:shadow-none
+                    transition-transform duration-300 ease-out
+                    ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'}
+                    overflow-y-auto
+                `}>
                     <div className="p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="font-semibold text-gray-900">Post Settings</h3>
-                            <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-1 text-gray-400 hover:text-gray-600">
+                        <div className="flex items-center justify-between mb-8">
+                            <h3 className="font-bold text-lg text-gray-900">Settings</h3>
+                            <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 text-gray-400 hover:bg-gray-100 rounded-full">
                                 <X size={20} />
                             </button>
                         </div>
                         
-                        {/* Sidebar Content (Same as before) */}
-                        <div className="mb-6">
-                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block flex items-center gap-2">
-                                <Palette size={12} /> Appearance
+                        {/* Appearance */}
+                        <div className="mb-8">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                <Palette size={14} /> Appearance
                             </label>
-                            <div>
-                                <label className="text-[10px] text-gray-500 uppercase mb-1 block">Page Background</label>
-                                <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
-                                    <div className="w-6 h-6 rounded-full border border-gray-200 shadow-sm overflow-hidden relative">
-                                        <input type="color" value={pageBgColor} onChange={(e) => setPageBgColor(e.target.value)} className="absolute -top-2 -left-2 w-12 h-12 cursor-pointer p-0 border-0" />
+                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                <span className="text-sm font-medium text-gray-600">Background</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-gray-400 font-mono">{pageBgColor}</span>
+                                    <div className="w-8 h-8 rounded-full border border-gray-200 shadow-sm overflow-hidden relative cursor-pointer hover:scale-105 transition-transform">
+                                        <input type="color" value={pageBgColor} onChange={(e) => setPageBgColor(e.target.value)} className="absolute -top-4 -left-4 w-16 h-16 p-0 border-0 cursor-pointer" />
                                     </div>
-                                    <span className="text-xs text-gray-600 font-mono">{pageBgColor}</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="mb-6">
-                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">URL Slug</label>
-                            <div className="flex items-center bg-gray-50 rounded-lg border border-gray-200 transition-all">
+                        {/* Slug */}
+                        <div className="mb-8">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 block">URL Slug</label>
+                            <div className="flex items-center bg-gray-50 rounded-xl border border-gray-200 focus-within:border-black focus-within:ring-1 focus-within:ring-black transition-all overflow-hidden">
                                 <div className="pl-3 text-gray-400"><Globe size={16} /></div>
-                                <input type="text" value={slug} onChange={(e) => setSlug(e.target.value)} placeholder={"url-slug"} className="w-full bg-transparent border-none text-sm p-3 text-gray-700 focus:ring-0" />
+                                <input type="text" value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="url-slug" className="w-full bg-transparent border-none text-sm p-3 text-gray-700 focus:ring-0 placeholder-gray-400" />
                             </div>
                         </div>
-                        <div className="mb-6">
-                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Tags</label>
-                            <div className="flex flex-wrap gap-2 mb-2">
+
+                        {/* Tags */}
+                        <div className="mb-8">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 block">Tags</label>
+                            <div className="flex flex-wrap gap-2 mb-3">
                                 {tags.map((tag) => (
-                                    <span key={tag} className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-md flex items-center gap-1">
-                                        {tag} <button onClick={() => setTags(tags.filter((t) => t !== tag))} className="hover:text-slate-900"><X size={12} /></button>
+                                    <span key={tag} className="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-medium rounded-md flex items-center gap-1 border border-slate-200">
+                                        {tag} <button onClick={() => setTags(tags.filter((t) => t !== tag))} className="hover:text-red-500"><X size={12} /></button>
                                     </span>
                                 ))}
                             </div>
-                            <div className="flex items-center bg-gray-50 rounded-lg border border-gray-200">
+                            <div className="flex items-center bg-gray-50 rounded-xl border border-gray-200 focus-within:border-black transition-all">
                                 <div className="pl-3 text-gray-400"><Hash size={16} /></div>
-                                <input type="text" value={newTag} onChange={(e) => setNewTag(e.target.value)} onKeyDown={addTag} placeholder="Add tag + Enter..." className="w-full bg-transparent border-none text-sm p-3 text-gray-700 focus:ring-0" />
+                                <input type="text" value={newTag} onChange={(e) => setNewTag(e.target.value)} onKeyDown={addTag} placeholder="Add tag..." className="w-full bg-transparent border-none text-sm p-3 text-gray-700 focus:ring-0" />
                             </div>
                         </div>
+
+                        {/* SEO Score */}
                         <div className="mb-6">
-                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">SEO Score</label>
-                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className={`font-bold text-xl ${title.length > 10 ? 'text-green-500' : 'text-yellow-500'}`}>{title.length > 10 ? '92' : '45'}</span>
-                                    <span className="text-xs text-gray-500">{title.length > 10 ? 'Great!' : 'Needs Work'}</span>
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 block">SEO Check</label>
+                            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className={`font-bold text-2xl ${title.length > 10 ? 'text-green-500' : 'text-orange-400'}`}>{title.length > 10 ? '92' : '45'}</span>
+                                    <span className="text-xs font-medium px-2 py-1 bg-gray-100 rounded text-gray-600">{title.length > 10 ? 'Good' : 'Weak'}</span>
                                 </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-                                    <div className={`h-2 rounded-full ${title.length > 10 ? 'bg-green-500' : 'bg-yellow-500'}`} style={{ width: title.length > 10 ? '92%' : '45%' }}></div>
+                                <div className="w-full bg-gray-100 rounded-full h-1.5 mb-4">
+                                    <div className={`h-1.5 rounded-full transition-all duration-500 ${title.length > 10 ? 'bg-green-500 w-[92%]' : 'bg-orange-400 w-[45%]'}`}></div>
                                 </div>
                                 <ul className="space-y-2">
-                                    <li className="flex items-start gap-2 text-xs text-gray-600">
-                                        <CheckCircle2 size={14} className={title.length > 0 ? 'text-green-500 mt-0.5' : 'text-gray-300 mt-0.5'} />
-                                        <span>Has a title</span>
+                                    <li className="flex items-center gap-2 text-xs text-gray-600">
+                                        <CheckCircle2 size={14} className={title.length > 0 ? 'text-green-500' : 'text-gray-300'} />
+                                        <span>Title Present</span>
                                     </li>
-                                    <li className="flex items-start gap-2 text-xs text-gray-600">
-                                        <AlertCircle size={14} className={cover_image ? 'text-green-500 mt-0.5' : 'text-orange-400 mt-0.5'} />
-                                        <span>{cover_image ? 'Cover image added' : 'Add cover image'}</span>
+                                    <li className="flex items-center gap-2 text-xs text-gray-600">
+                                        <AlertCircle size={14} className={cover_image ? 'text-green-500' : 'text-orange-400'} />
+                                        <span>{cover_image ? 'Cover Added' : 'Missing Cover'}</span>
                                     </li>
                                 </ul>
                             </div>
