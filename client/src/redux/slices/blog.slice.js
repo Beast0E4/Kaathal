@@ -39,11 +39,7 @@ export const uploadImage = createAsyncThunk('Blog/uploadImage', async (imageData
 
 export const getBlog = createAsyncThunk('Blog/get_blog', async (slug, { dispatch, rejectWithValue }) => {
     try {
-        const response = await axiosInstance.get(`blog/${slug}`, {
-            headers: {
-                'x-access-token': localStorage.getItem('token')
-            }
-        });
+        const response = await axiosInstance.get(`blog/${slug}`);
 
         return response;
     } catch (error) {
@@ -54,11 +50,7 @@ export const getBlog = createAsyncThunk('Blog/get_blog', async (slug, { dispatch
 
 export const getAllBlogs = createAsyncThunk('Blog/get_blogs', async (_, { dispatch, rejectWithValue }) => {
     try {
-        const response = await axiosInstance.get(`blog`, {
-            headers: {
-                'x-access-token': localStorage.getItem('token')
-            }
-        });
+        const response = await axiosInstance.get(`blog`);
 
         return response;
     } catch (error) {
