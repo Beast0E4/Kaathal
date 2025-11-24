@@ -4,7 +4,7 @@ import {
     ChevronLeft, Eye, Settings, X,
     Save, Send, Globe, Hash, Sparkles,
     PanelLeftClose, CheckCircle2, AlertCircle,
-    Quote, Highlighter, ImagePlus, UploadCloud
+    Quote, Highlighter, ImagePlus, UploadCloud, Palette
 } from 'lucide-react';
 import ToolbarButton from "../components/ToolbarButton";
 import { useDispatch, useSelector } from "react-redux";
@@ -30,6 +30,10 @@ function Editor() {
     const [newTag, setNewTag] = useState("");
     const [status, setStatus] = useState('draft');
     const [saveStatus, setSaveStatus] = useState('saved');
+
+    // Colors
+    const [pageBgColor, setPageBgColor] = useState('#ffffff');
+    const [highlightColor, setHighlightColor] = useState('#facc15'); // Default Yellow
 
     // Modal states for insertion
     const [showUrlInput, setShowUrlInput] = useState(false);
@@ -68,10 +72,12 @@ function Editor() {
             setContent(blog?.content);
             if (blog?.tags?.length > 0) setTags(blog?.tags);
             
-            // Handle potentially different image object structures
             const image = blog?.cover_image?.url || blog?.cover_image;
             setCoverImage(image);
             setSlug(blog?.slug);
+            
+            // Restore Theme Background (Highlight is now inline, so we don't load a global one)
+            if(blog?.theme?.background) setPageBgColor(blog.theme.background);
         }
     }
 
@@ -89,13 +95,31 @@ function Editor() {
             return;
         }
 
+        // UPDATED: Highlight Logic for Multi-color support
+        if (type === 'highlight') {
+            // We use HTML tags here to support specific colors per selection
+            const prefix = `<mark style="background-color: ${highlightColor};">`;
+            const suffix = `</mark>`;
+            const newText = text.substring(0, start) + prefix + selectedText + suffix + text.substring(end);
+            
+            setContent(newText);
+            
+            // Reset cursor
+            const newCursorPos = end + prefix.length; 
+            setTimeout(() => {
+                textareaRef.current.focus();
+                textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+            }, 0);
+            return;
+        }
+
         let newText = text;
         let newCursorPos = end;
 
         const formats = {
             bold: { wrap: '**', offset: 4 },
             italic: { wrap: '_', offset: 2 },
-            highlight: { wrap: '==', offset: 4 },
+            // highlight removed from here, handled explicitly above
             list: { prefix: '\n- ', offset: 3 },
             h2: { prefix: '\n## ', offset: 4 },
             quote: { prefix: '\n> ', offset: 3 }
@@ -155,12 +179,10 @@ function Editor() {
         }
     };
 
-    // UPDATED: More robust handler
     const handleCoverImageUpload = (e) => {
         const file = e.target.files[0];
         if (file) {
             setCoverImage(file);
-            // Reset value so if you delete and re-select the same file, it triggers
             e.target.value = '';
         }
     };
@@ -174,21 +196,19 @@ function Editor() {
         formData.append('title', title);
         formData.append('content', content);
 
+        console.log (pageBgColor);
+        
+        // Only save Background color as a global theme setting
+        formData.append('theme', pageBgColor);
+        // Highlight color is NOT saved globally, it is embedded in the content HTML
+
         const finalSlug = slug || title.toLowerCase().replace(/\s+/g, '-');
         formData.append('slug', finalSlug);
 
         tags.forEach(tag => formData.append('tags', tag));
 
-        // CRITICAL FIX: Only append if it is a NEW file. 
-        // If it is a string (old URL), do not send 'image' field, 
-        // so backend preserves the existing one.
         if (cover_image instanceof File) {
-            console.log("Appending new image file:", cover_image);
             formData.append('image', cover_image);
-        } else {
-            console.log("Keeping old image (String):", cover_image);
-            // Optional: If you support deleting images, you might need a separate flag
-            // e.g. if cover_image is null, formData.append('deleteImage', true);
         }
 
         try {
@@ -212,8 +232,23 @@ function Editor() {
         navigate(`/blog/${slug}`);
     }
 
+    const handleTitleChange = (e) => {
+        const value = e.target.value;
+        setTitle(value);  
+        setSlug (value.toLowerCase().trim().replace(/\s+/g, '-').slice(0, 10));
+    }
+
+
     return (
         <div className="min-h-screen bg-gray-50 text-slate-800 font-sans flex flex-col">
+            {/* Selection style matches current highlighter tool for visual feedback */}
+            <style>{`
+                ::selection {
+                    background-color: ${highlightColor}80 !important; 
+                    color: black;
+                }
+            `}</style>
+
             <nav className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 sticky top-0 z-50 shadow-sm">
                 <div className="flex items-center gap-4">
                     <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors">
@@ -248,7 +283,10 @@ function Editor() {
 
             <div className="flex flex-1 overflow-hidden">
                 <main className="flex-1 overflow-y-auto relative">
-                    <div className="max-w-3xl mx-auto py-12 px-8 min-h-[calc(100vh-4rem)] bg-white my-8 rounded-xl shadow-sm border border-gray-100 relative">
+                    <div 
+                        className="max-w-3xl mx-auto py-12 px-8 min-h-[calc(100vh-4rem)] my-8 rounded-xl shadow-sm border border-gray-100 relative transition-colors duration-300"
+                        style={{ backgroundColor: pageBgColor }}
+                    >
                         
                         {/* COVER IMAGE LOGIC */}
                         {!cover_image ? (
@@ -280,7 +318,6 @@ function Editor() {
                                         <X size={18} />
                                     </button>
                                 </div>
-                                {/* Hidden Input for Change Action */}
                                 <input
                                     ref={coverInputRef}
                                     type="file"
@@ -292,18 +329,31 @@ function Editor() {
                             </div>
                         )}
 
-                        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Post Title..." className="w-full text-5xl font-bold text-slate-900 placeholder-gray-300 border-none focus:ring-0 focus:outline-none mb-6 tracking-tight leading-tight" />
+                        <input type="text" value={title} onChange={handleTitleChange} placeholder="Post Title..." className="w-full text-5xl font-bold text-slate-900 placeholder-gray-300 border-none focus:ring-0 focus:outline-none mb-6 tracking-tight leading-tight bg-transparent" />
 
-                        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md py-3 border-b border-gray-100 mb-6 flex items-center gap-1">
-                            <ToolbarButton icon={<Bold size={18} />} onClick={() => insertFormat('bold')} />
-                            <ToolbarButton icon={<Italic size={18} />} onClick={() => insertFormat('italic')} />
-                            <ToolbarButton icon={<Highlighter size={18} />} onClick={() => insertFormat('highlight')} />
+                        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md py-3 border-b border-gray-100 mb-6 flex items-center gap-1 rounded-lg" style={{backgroundColor: `${pageBgColor}CC`}}>
+                            <ToolbarButton title={'Bold'} icon={<Bold size={18} />} onClick={() => insertFormat('bold')} />
+                            <ToolbarButton title={'Italic'} icon={<Italic size={18} />} onClick={() => insertFormat('italic')} />
+                            
+                            {/* Toolbar Highlighter with Color Input */}
+                            <div className="flex items-center bg-gray-100 rounded-lg mx-1 pr-1 border border-gray-200">
+                                <ToolbarButton title={'Highlight'} icon={<Highlighter size={18} />} onClick={() => insertFormat('highlight')} />
+                                <div className="h-4 w-px bg-gray-300 mx-1"></div>
+                                <input 
+                                    type="color" 
+                                    value={highlightColor} 
+                                    onChange={(e) => setHighlightColor(e.target.value)} 
+                                    className="w-6 h-6 rounded cursor-pointer border-none p-0 bg-transparent" 
+                                    title="Choose highlight color"
+                                />
+                            </div>
+
                             <div className="w-px h-5 bg-gray-200 mx-2" />
-                            <ToolbarButton icon={<Type size={18} />} onClick={() => insertFormat('h2')} />
-                            <ToolbarButton icon={<Quote size={18} />} onClick={() => insertFormat('quote')} />
-                            <ToolbarButton icon={<List size={18} />} onClick={() => insertFormat('list')} />
+                            <ToolbarButton title={'Heading'} icon={<Type size={18} />} onClick={() => insertFormat('h2')} />
+                            <ToolbarButton title={'Quote'} icon={<Quote size={18} />} onClick={() => insertFormat('quote')} />
+                            <ToolbarButton title={'List'} icon={<List size={18} />} onClick={() => insertFormat('list')} />
                             <div className="w-px h-5 bg-gray-200 mx-2" />
-                            <ToolbarButton icon={<ImagePlus size={18} />} onClick={() => insertFormat('image')} />
+                            <ToolbarButton title={'Image'} icon={<ImagePlus size={18} />} onClick={() => insertFormat('image')} />
                             <button className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 text-purple-600 rounded-md text-xs font-medium hover:bg-purple-100 transition-colors ml-auto">
                                 <Sparkles size={14} /> AI Assist
                             </button>
@@ -341,7 +391,7 @@ function Editor() {
                             </div>
                         )}
 
-                        <textarea ref={textareaRef} value={content} onChange={(e) => setContent(e.target.value)} placeholder="Tell your story..." className="w-full resize-none text-xl leading-relaxed text-gray-700 border-none focus:ring-0 focus:outline-none min-h-[400px] font-serif" spellCheck={false} />
+                        <textarea ref={textareaRef} value={content} onChange={(e) => setContent(e.target.value)} placeholder="Tell your story..." className="w-full resize-none text-xl leading-relaxed text-gray-700 border-none focus:ring-0 focus:outline-none min-h-[400px] font-serif bg-transparent" spellCheck={false} />
                     </div>
                 </main>
 
@@ -349,11 +399,28 @@ function Editor() {
                 <aside className={`bg-white border-l border-gray-100 w-80 transition-all duration-300 ease-in-out flex flex-col overflow-y-auto absolute right-0 h-full z-20 shadow-2xl ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full opacity-0 pointer-events-none'}`}>
                     <div className="p-6">
                         <h3 className="font-semibold text-gray-900 mb-6">Post Settings</h3>
+
+                        <div className="mb-6">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block flex items-center gap-2">
+                                <Palette size={12} /> Appearance
+                            </label>
+                            <div>
+                                <label className="text-[10px] text-gray-500 uppercase mb-1 block">Page Background</label>
+                                <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
+                                    <div className="w-6 h-6 rounded-full border border-gray-200 shadow-sm overflow-hidden relative">
+                                        <input type="color" value={pageBgColor} onChange={(e) => setPageBgColor(e.target.value)} className="absolute -top-2 -left-2 w-12 h-12 cursor-pointer p-0 border-0" />
+                                    </div>
+                                    <span className="text-xs text-gray-600 font-mono">{pageBgColor}</span>
+                                </div>
+                            </div>
+                            {/* Highlight color picker removed from here, moved to Toolbar */}
+                        </div>
+
                         <div className="mb-6">
                             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">URL Slug</label>
                             <div className="flex items-center bg-gray-50 rounded-lg border border-gray-200 transition-all">
                                 <div className="pl-3 text-gray-400"><Globe size={16} /></div>
-                                <input type="text" value={slug} onChange={(e) => setSlug(e.target.value)} placeholder={title.toLowerCase().replace(/\s+/g, '-')} className="w-full bg-transparent border-none text-sm p-3 text-gray-700 focus:ring-0" />
+                                <input type="text" value={slug} onChange={(e) => setSlug(e.target.value)} placeholder={"url-slug"} className="w-full bg-transparent border-none text-sm p-3 text-gray-700 focus:ring-0" />
                             </div>
                         </div>
                         <div className="mb-6">

@@ -25,6 +25,10 @@ const blogSchema = new Schema({
         type: String,
         required: [true, 'Slug cannot be empty'],
     },
+    theme: {
+        type: String,
+        required: [true, 'Theme cannot be empty'],
+    },
     createdAt: {
         type: Date,
         default: Date.now
