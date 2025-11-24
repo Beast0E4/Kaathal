@@ -50,10 +50,7 @@ function Profile () {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-slate-800">
-      <nav className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 sticky top-0 z-50">
-         <div className="flex items-center gap-2 font-bold text-xl cursor-pointer" onClick={() => navigate('/dashboard')}>
-             <ChevronLeft size={20} /> Back
-         </div>
+      <nav className="h-16 bg-white border-b border-gray-100 flex items-center justify-end px-6 sticky top-0 z-50">
          <div className="text-sm font-medium">Profile Settings</div>
       </nav>
 
