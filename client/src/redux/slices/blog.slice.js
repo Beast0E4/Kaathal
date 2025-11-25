@@ -17,6 +17,7 @@ export const createBlog = createAsyncThunk('Blog/createBlog', async (blogData, {
         dispatch(showToast({ message: 'Blog published successfully!', type: 'success' }));
         return response;
     } catch (error) {
+        console.log (error.response);
         dispatch(showToast({ message: error.response?.data?.error, type: 'error' }));
         return rejectWithValue (error.response?.data?.error);
     }

@@ -51,13 +51,27 @@ const parseStandardFormatting = (text) => {
       }
 
       // 3. Split by Links ([text](url))
-      const linkParts = subPart.split(/(\[.*?\]\(.*?\))/g);
-      
-      return linkParts.map((linkPart, k) => {
+    const linkParts = subPart.split(/(\[.*?\]\(.*?\))/g);
+
+    return linkParts.map((linkPart, k) => {
         const linkMatch = linkPart.match(/^\[(.*?)\]\((.*?)\)$/);
 
         if (linkMatch) {
             const [, linkText, linkUrl] = linkMatch;
+
+            // --- Logic to extract Domain Name ---
+            let domainName = linkUrl;
+            try {
+                // Check if protocol exists, if not add https for parsing
+                const urlToParse = linkUrl.startsWith('http') ? linkUrl : `https://${linkUrl}`;
+                const urlObj = new URL(urlToParse);
+                domainName = urlObj.hostname.replace(/^www\./, ''); // Removes 'www.' for a cleaner look
+            } catch (e) {
+                // If URL is invalid, fallback to linkText or original URL
+                domainName = linkText || linkUrl;
+            }
+            // ------------------------------------
+
             return (
                 <a 
                     key={k} 
@@ -67,12 +81,12 @@ const parseStandardFormatting = (text) => {
                     // Responsive text size and word breaking for mobile safety
                     className="text-blue-700 hover:text-blue-900 hover:underline decoration-blue-300 underline-offset-2 transition-colors cursor-pointer break-words"
                 >
-                    {/* Display linkText if available, otherwise display the URL */}
-                    {linkText || linkUrl}
+                    {/* Display only the domain name */}
+                    {domainName}
                 </a>
             );
         }
-        
+
         return linkPart;
       });
     });
@@ -111,7 +125,7 @@ export function parseMarkdown(text) {
     // 3. Headings (## text)
     if (trimmed.startsWith('## ')) {
       return (
-        <h2 key={lineIndex} className="font-bold text-slate-900 tracking-tight leading-tight mt-8 mb-3 text-2xl sm:mt-10 sm:mb-4 sm:text-3xl">
+        <h2 key={lineIndex} className="font-bold text-slate-900 tracking-tight leading-tight mb-3 text-2xl sm:text-3xl">
             {parseInline(trimmed.replace('## ', ''))}
         </h2>
       );
@@ -121,14 +135,13 @@ export function parseMarkdown(text) {
     const imgMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/);
     if (imgMatch) {
       return (
-        <figure key={lineIndex} className="group my-6 sm:my-8">
+        <figure key={lineIndex} className="group">
           <img 
             src={imgMatch[2]} 
             alt={imgMatch[1]} 
             className="w-full rounded-xl shadow-sm border border-gray-100 object-cover" 
             loading="lazy"
           />
-          {imgMatch[1] && <figcaption className="text-center text-xs sm:text-sm text-gray-500 mt-2">{imgMatch[1]}</figcaption>}
         </figure>
       );
     }

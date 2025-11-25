@@ -25,7 +25,7 @@ const createBlog = async (data, file) => {
 const get_blog = async (data) => {
     const response = {};
     try {
-        const blog = await Blog.findOne ({ slug: data.slug }).populate("userId", "id username image");
+        const blog = await Blog.findOne ({ slug: data.slug }).populate("userId", "id name image");
 
         if (!blog) {
             response.error = "Blog not created";

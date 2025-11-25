@@ -69,7 +69,7 @@ function Preview () {
         )}
       </nav>
 
-      <article className="pt-24 pb-32">
+      <article className="pt-24">
         <div className="max-w-3xl mx-auto p-6 rounded-md"  style={{ backgroundColor: pageBgColor }}>
           {blog?.cover_image?.url && (
             <div className="mb-12 rounded-xl overflow-hidden shadow-sm">
@@ -89,7 +89,7 @@ function Preview () {
                  <div className="w-8 h-8 bg-gray-200 rounded-full overflow-hidden">
                     <img src={blog?.userId?.image?.url} alt="Author" className="w-full h-full object-cover" />
                  </div>
-                 <span>{blog?.userId?.username}</span>
+                 <span>{blog?.userId?.name}</span>
                </div>
                <span>•</span>
                <span>
@@ -109,7 +109,7 @@ function Preview () {
           </div>
 
           <div className="mt-24 pt-12 border-t border-gray-100 font-sans text-center text-gray-400">
-            <p>Thanks for reading.</p>
+            <p>Thanks for reading</p>
           </div>
         </div>
       </article>
