@@ -17,7 +17,7 @@ function MainRoutes () {
         {/* --- PUBLIC ROUTES --- */}
         {/* These are NOT wrapped in Layout, so anyone can see them */}
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/editor" element={<Editor />} />
+        <Route path="/blog/edit" element={<Editor />} />
         <Route path="/blog/:slug" element={<Preview />} />
 
         {/* --- PROTECTED ROUTES --- */}
@@ -26,7 +26,7 @@ function MainRoutes () {
         <Route element={<Layout />}>
             <Route path="/" element={<Home />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/editor/:blog_slug" element={<Editor />} />
+            <Route path="/blog/edit/:blog_slug" element={<Editor />} />
             
             {/* Note: Based on your request, Login/Signup are here. 
                 Non-logged-in users visiting /login will see Permission Denied. */}

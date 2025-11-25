@@ -1,29 +1,33 @@
 import { useEffect, useState } from "react";
 import { parseMarkdown } from "../utils/MarkdownParser";
-import { Link, useParams, useNavigate } from 'react-router-dom'; // Added useNavigate
+import { Link, useParams, useNavigate } from 'react-router-dom'; 
 import { useDispatch, useSelector } from "react-redux";
 import { getBlog } from "../redux/slices/blog.slice";
 import { showToast } from "../redux/slices/toast.slice";
 
 import { 
-  ChevronLeft, Edit3
+  ChevronLeft, Edit3, Loader2 
 } from 'lucide-react';
 
 function Preview () {
-    const authState = useSelector ((state) => state.auth);
+  const authState = useSelector ((state) => state.auth);
 
   const [blog, setBlog] = useState(null);
+  const [isLoading, setIsLoading] = useState(true); 
 
   const dispatch = useDispatch();
-  const navigate = useNavigate(); // Hook needed for the back button
+  const navigate = useNavigate();
   const { slug } = useParams();
 
   async function get_blog () {
+    setIsLoading(true); 
     try {
         const res = await dispatch(getBlog(slug));
         setBlog(res.payload.data.blogsData.blog);
     } catch (err) {
         dispatch(showToast({ message: 'Blog fetch failed!', type: 'error' }));
+    } finally {
+        setIsLoading(false); 
     }
   }
 
@@ -31,25 +35,39 @@ function Preview () {
     get_blog ();
   }, [slug]);
 
-  // 1. Extract color with a fallback to white
-  // This ensures the page isn't transparent while loading
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+         <Loader2 size={40} className="animate-spin text-slate-900 mb-4" />
+         <p className="text-gray-400 text-sm">Loading story...</p>
+      </div>
+    );
+  }
+
   const pageBgColor = blog?.theme;
-  console.log (blog);
 
   return (
-    // 2. Apply background color via inline style
-    // Removed 'bg-white' class to prevent conflicts
     <div 
       className="min-h-screen font-serif text-slate-900 selection:bg-yellow-100 transition-colors duration-500 bg-white"
     >
-      {/* 3. Updated Navbar to match background with 90% opacity (CC hex) */}
-      {authState.isLoggedIn && <nav 
-        className="fixed top-0 w-full backdrop-blur-md border-b border-gray-100/50 z-50 px-6 h-16 flex items-center justify-end transition-colors duration-500"
+      {/* Navbar: Now visible to all, used justify-between to split buttons */}
+      <nav 
+        className="fixed top-0 w-full backdrop-blur-md border-b border-gray-100/50 z-50 px-6 h-16 flex items-center justify-between transition-colors duration-500"
       >
-        <Link to={`/blog/edit/${blog?.slug}`} className="flex items-center gap-2 text-sm font-sans bg-slate-900 text-white px-4 py-2 rounded-full hover:bg-slate-800">
-          <Edit3 size={14} /> Edit this blog
+        {/* Left: Back to Dashboard */}
+        <Link to={'/dashboard'}
+          className="flex items-center gap-1 text-sm font-sans font-medium text-slate-500 hover:text-slate-900 transition-colors"
+        >
+          <ChevronLeft size={18} /> Back to Dashboard
         </Link>
-      </nav>}
+
+        {/* Right: Edit (Only if logged in) */}
+        {authState.isLoggedIn && (
+          <Link to={`/blog/edit/${blog?.slug}`} className="flex items-center gap-2 text-sm font-sans bg-slate-900 text-white px-4 py-2 rounded-full hover:bg-slate-800 transition-all">
+            <Edit3 size={14} /> Edit this blog
+          </Link>
+        )}
+      </nav>
 
       <article className="pt-24 pb-32">
         <div className="max-w-3xl mx-auto p-6 rounded-md"  style={{ backgroundColor: pageBgColor }}>
@@ -69,7 +87,6 @@ function Preview () {
              <div className="flex items-center justify-center gap-4 font-sans text-sm text-gray-500">
                <div className="flex items-center gap-2">
                  <div className="w-8 h-8 bg-gray-200 rounded-full overflow-hidden">
-                    {/* Added optional chaining for safety */}
                     <img src={blog?.userId?.image?.url} alt="Author" className="w-full h-full object-cover" />
                  </div>
                  <span>{blog?.userId?.username}</span>
@@ -77,17 +94,16 @@ function Preview () {
                <span>•</span>
                <span>
                 {blog?.createdAt
-                    ? new Date(blog.createdAt).toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric'
-                    })
-                    : 'Unknown Date'}
+                   ? new Date(blog.createdAt).toLocaleDateString('en-GB', {
+                       day: '2-digit',
+                       month: 'short',
+                       year: 'numeric'
+                   })
+                   : 'Unknown Date'}
                </span>
              </div>
           </div>
           
-          {/* Added 'bg-transparent' to ensure prose doesn't force a white background  */}
           <div className="prose prose-lg prose-slate mx-auto bg-transparent">
             {parseMarkdown(blog?.content)}
           </div>

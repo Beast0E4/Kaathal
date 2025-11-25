@@ -1,6 +1,6 @@
 import { 
   Plus, Edit3, Trash2, ExternalLink, ArrowRight,
-  Feather
+  Feather, Loader2 
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -9,21 +9,28 @@ import { deleteBlog, getAllBlogs } from '../redux/slices/blog.slice';
 import { showToast } from '../redux/slices/toast.slice';
 
 function Dashboard () {
-    const authState = useSelector ((state) => state.auth);
+  const authState = useSelector ((state) => state.auth);
   const blogState = useSelector ((state) => state.blog);
 
   const dispatch = useDispatch ();
   const navigate = useNavigate();
 
-  // State for Delete Modal
+  // State for Delete Modal and Loading
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [blogToDelete, setBlogToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false); 
+  
+  // New state for fetching blogs
+  const [isFetchingBlogs, setIsFetchingBlogs] = useState(true); 
 
   async function getBlogs () {
+    setIsFetchingBlogs(true); // Start fetching loader
     try {
         await dispatch (getAllBlogs ());
     } catch (err) {
         dispatch(showToast({ message: 'Blog fetched failed!', type: 'error' }));
+    } finally {
+        setIsFetchingBlogs(false); // Stop fetching loader
     }
   }
 
@@ -35,6 +42,8 @@ function Dashboard () {
   async function confirmDelete () {
     if (!blogToDelete) return;
     
+    setIsDeleting(true); 
+
     try {
         await dispatch (deleteBlog (blogToDelete));
         dispatch(showToast({ message: 'Blog deleted successfully', type: 'success' }));
@@ -42,6 +51,8 @@ function Dashboard () {
         setBlogToDelete(null);
     } catch (err) {
         dispatch(showToast({ message: 'Blog could not be deleted!', type: 'error' }));
+    } finally {
+        setIsDeleting(false); 
     }
   }
 
@@ -61,14 +72,13 @@ function Dashboard () {
       {/* Main Content: Adjusted padding */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         
-        {/* Header Section: Flex-col on mobile, Flex-row on desktop */}
+        {/* Header Section */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 sm:mb-12 gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-2">{authState.isLoggedIn ? 'Your Stories' : 'All Stories'}</h1>
             <p className="text-gray-500 text-sm sm:text-base">{authState.isLoggedIn ? 'Manage your blog blogs and drafts.' : ''}</p>
           </div>
           
-          {/* New Story Button: Full width on mobile for better tapping */}
           {authState.isLoggedIn && <Link to={'/blog/edit'}
             className="w-full sm:w-auto justify-center bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-full font-medium shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
           >
@@ -76,66 +86,74 @@ function Dashboard () {
           </Link>}
         </div>
 
-        {blogState.blogList.length === 0 ? (
-          <div className="bg-white rounded-2xl p-8 sm:p-12 text-center border border-dashed border-gray-300">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-              <Edit3 size={24} />
+        {/* CONTENT LOADING LOGIC */}
+        {isFetchingBlogs ? (
+            // 1. Loading State
+            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                <Loader2 size={40} className="animate-spin text-slate-900 mb-4" />
+                <p>Loading stories...</p>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No stories yet</h3>
-            <p className="text-gray-500 mb-6">Create your first blog post to get started.</p>
-            <Link to={'/blog/edit'} className="text-slate-900 font-medium hover:underline">Write a story</Link>
-          </div>
+        ) : blogState.blogList.length === 0 ? (
+            // 2. Empty State
+            <div className="bg-white rounded-2xl p-8 sm:p-12 text-center border border-dashed border-gray-300">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+                <Edit3 size={24} />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No stories yet</h3>
+                <p className="text-gray-500 mb-6">Create your first blog post to get started.</p>
+                <Link to={'/blog/edit'} className="text-slate-900 font-medium hover:underline">Write a story</Link>
+            </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {blogState.blogList.map(blog => (
-              <div 
-                key={blog._id}
-                className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col h-full relative"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <span className={`px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-700`}>
-                    'Published'
-                  </span>
-                  
-                  {/* Action Buttons: Visible by default on mobile (opacity-100), hidden until hover on desktop (sm:opacity-0) */}
-                  <div className="flex gap-2 opacity-100 sm:group-hover:opacity-100 transition-opacity">
-                    <Link to={`/blog/${blog.slug}`}
-                      className="p-2 hover:bg-gray-100 rounded-full text-gray-500 hover:text-blue-600"
-                      title="View Live Page"
-                    >
-                      <ExternalLink size={16} />
-                    </Link>
-                    {authState.isLoggedIn && <button 
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent card click
-                        handleDeleteClick(blog.slug);
-                      }}
-                      className="p-2 hover:bg-red-50 rounded-full text-gray-400 hover:text-red-500"
-                      title="Delete"
-                    >
-                      <Trash2 size={16} />
-                    </button>}
-                  </div>
+            // 3. Data Grid State
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {blogState.blogList.map(blog => (
+                <div 
+                    key={blog._id}
+                    className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col h-full relative"
+                >
+                    <div className="flex justify-between items-start mb-4">
+                    <span className={`px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-700`}>
+                        Published
+                    </span>
+                    
+                    <div className="flex gap-2 opacity-100 sm:group-hover:opacity-100 transition-opacity">
+                        <Link to={`/blog/${blog.slug}`}
+                        className="p-2 hover:bg-gray-100 rounded-full text-gray-500 hover:text-blue-600"
+                        title="View Live Page"
+                        >
+                        <ExternalLink size={16} />
+                        </Link>
+                        {authState.isLoggedIn && <button 
+                        onClick={(e) => {
+                            e.stopPropagation(); 
+                            handleDeleteClick(blog.slug);
+                        }}
+                        className="p-2 hover:bg-red-50 rounded-full text-gray-400 hover:text-red-500"
+                        title="Delete"
+                        >
+                        <Trash2 size={16} />
+                        </button>}
+                    </div>
+                    </div>
+                    
+                    <h3 className="font-bold text-xl text-slate-900 mb-2 line-clamp-2">{blog.title || "Untitled Story"}</h3>
+                    <p className="text-gray-500 text-sm line-clamp-3 mb-6 flex-1">
+                    {blog.content || "No content yet..."}
+                    </p>
+                    
+                    <div className="text-xs text-gray-400 pt-4 border-t border-gray-50 flex justify-between items-center">
+                    <span>{blog?.createdAt
+                        ? new Date(blog.createdAt).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                        })
+                        : 'Unknown Date'}</span>
+                    {authState.isLoggedIn && <Link to={`/blog/edit/${blog?.slug}`} className="flex items-center gap-1 group-hover:text-slate-900 transition-colors">Edit <ArrowRight size={12} /></Link>}
+                    </div>
                 </div>
-                
-                <h3 className="font-bold text-xl text-slate-900 mb-2 line-clamp-2">{blog.title || "Untitled Story"}</h3>
-                <p className="text-gray-500 text-sm line-clamp-3 mb-6 flex-1">
-                  {blog.content || "No content yet..."}
-                </p>
-                
-                <div className="text-xs text-gray-400 pt-4 border-t border-gray-50 flex justify-between items-center">
-                  <span>{blog?.createdAt
-                    ? new Date(blog.createdAt).toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric'
-                    })
-                    : 'Unknown Date'}</span>
-                  {authState.isLoggedIn && <Link to={`/blog/edit/${blog?.slug}`} className="flex items-center gap-1 group-hover:text-slate-900 transition-colors">Edit <ArrowRight size={12} /></Link>}
-                </div>
-              </div>
-            ))}
-          </div>
+                ))}
+            </div>
         )}
       </div>
 
@@ -154,15 +172,23 @@ function Dashboard () {
               <div className="flex gap-3">
                 <button 
                   onClick={() => setShowDeleteModal(false)}
-                  className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={confirmDelete}
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 shadow-lg shadow-red-500/30 transition-all"
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 shadow-lg shadow-red-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  Delete
+                  {isDeleting ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" /> Deleting...
+                    </>
+                  ) : (
+                    'Delete'
+                  )}
                 </button>
               </div>
             </div>
