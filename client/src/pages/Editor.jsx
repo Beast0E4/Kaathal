@@ -49,14 +49,6 @@ function Editor() {
     const textareaRef = useRef(null);
     const coverInputRef = useRef(null);
 
-    // Auto-resize textarea
-    useEffect(() => {
-        if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
-        }
-    }, [content]);
-
     useEffect(() => {
         getCurrentBlog();
         
@@ -395,21 +387,29 @@ function Editor() {
                                 <ToolbarButton title={'Link'} icon={<LinkIcon size={18} />} onClick={() => insertFormat('link')} />
                                 <ToolbarButton title={'Image'} icon={<ImagePlus size={18} />} onClick={() => insertFormat('image')} />
                             </div>
-                            
-                            <button className="flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-600 rounded-md text-xs font-medium hover:bg-purple-100 transition-colors ml-auto shrink-0 whitespace-nowrap">
-                                <Sparkles size={14} /> <span className="hidden sm:inline">AI Assist</span>
-                            </button>
                         </div>
 
+                        
+
                         {/* Main Content Textarea */}
-                        <textarea 
-                            ref={textareaRef} 
-                            value={content} 
-                            onChange={(e) => setContent(e.target.value)} 
-                            placeholder="Tell your story..." 
-                            className="w-full resize-none text-lg sm:text-xl leading-relaxed text-gray-700 border-none focus:ring-0 focus:outline-none min-h-[50vh] font-serif bg-transparent" 
-                            spellCheck={false} 
-                        />
+                        {/* Container: CSS Grid allows stacking elements */}
+                        <div className="grid w-full min-h-[50vh] relative">
+                            
+                            {/* 1. The Hidden Replica: Controls the height */}
+                            <div className="col-start-1 row-start-1 whitespace-pre-wrap invisible p-0 border-none text-lg sm:text-xl leading-relaxed font-serif pointer-events-none">
+                                {content + ' '} {/* The space ensures empty lines have height */}
+                            </div>
+
+                            {/* 2. The Real Textarea: User types here */}
+                            <textarea
+                                ref={textareaRef}
+                                value={content}
+                                onChange={(e) => setContent(e.target.value)}
+                                placeholder="Tell your story..."
+                                spellCheck={true}
+                                className="col-start-1 row-start-1 w-full h-full resize-none overflow-hidden text-lg sm:text-xl leading-relaxed text-gray-700 border-none focus:ring-0 focus:outline-none font-serif bg-transparent p-0"
+                            />
+                        </div>
                     </div>
                 </main>
 
