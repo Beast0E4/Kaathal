@@ -2,7 +2,7 @@ const { StatusCodes } = require('http-status-codes');
 const blogService = require('../services/blog.service');
 
 const createBlog = async(req, res) => {
-    const response = await blogService.createBlog (req.body, req.file?.path);
+    const response = await blogService.createBlog (req.body, req.file);
     if(response.error){
         return res.status(StatusCodes.BAD_REQUEST).send({
             message : "Could not create the blog",

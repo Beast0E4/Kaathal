@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { parseMarkdown } from "../utils/MarkdownParser";
 import { Link, useParams, useNavigate } from 'react-router-dom'; // Added useNavigate
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { getBlog } from "../redux/slices/blog.slice";
 import { showToast } from "../redux/slices/toast.slice";
 
@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 
 function Preview () {
+    const authState = useSelector ((state) => state.auth);
+
   const [blog, setBlog] = useState(null);
 
   const dispatch = useDispatch();
@@ -41,13 +43,13 @@ function Preview () {
       className="min-h-screen font-serif text-slate-900 selection:bg-yellow-100 transition-colors duration-500 bg-white"
     >
       {/* 3. Updated Navbar to match background with 90% opacity (CC hex) */}
-      <nav 
+      {authState.isLoggedIn && <nav 
         className="fixed top-0 w-full backdrop-blur-md border-b border-gray-100/50 z-50 px-6 h-16 flex items-center justify-end transition-colors duration-500"
       >
         <Link to={`/blog/edit/${blog?.slug}`} className="flex items-center gap-2 text-sm font-sans bg-slate-900 text-white px-4 py-2 rounded-full hover:bg-slate-800">
           <Edit3 size={14} /> Edit this blog
         </Link>
-      </nav>
+      </nav>}
 
       <article className="pt-24 pb-32">
         <div className="max-w-3xl mx-auto p-6 rounded-md"  style={{ backgroundColor: pageBgColor }}>

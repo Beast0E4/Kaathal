@@ -17,7 +17,7 @@ export const createBlog = createAsyncThunk('Blog/createBlog', async (blogData, {
         dispatch(showToast({ message: 'Blog published successfully!', type: 'success' }));
         return response;
     } catch (error) {
-        dispatch(showToast({ message: 'Blog creation failed!', type: 'error' }));
+        dispatch(showToast({ message: error.response?.data?.error, type: 'error' }));
         return rejectWithValue (error.response?.data?.error);
     }
 });
@@ -32,7 +32,7 @@ export const uploadImage = createAsyncThunk('Blog/uploadImage', async (imageData
 
         return response;
     } catch (error) {
-        dispatch(showToast({ message: 'Image upload failed!', type: 'error' }));
+        dispatch(showToast({ message: error.response?.data?.error, type: 'error' }));
         return rejectWithValue (error.response?.data?.error);
     }
 });
@@ -43,7 +43,7 @@ export const getBlog = createAsyncThunk('Blog/get_blog', async (slug, { dispatch
 
         return response;
     } catch (error) {
-        dispatch(showToast({ message: 'Blog fetched failed!', type: 'error' }));
+        dispatch(showToast({ message: error.response?.data?.error, type: 'error' }));
         return rejectWithValue (error.response?.data?.error);
     }
 });
@@ -54,7 +54,7 @@ export const getAllBlogs = createAsyncThunk('Blog/get_blogs', async (_, { dispat
 
         return response;
     } catch (error) {
-        dispatch(showToast({ message: 'Blog fetched failed!', type: 'error' }));
+        dispatch(showToast({ message: error.response?.data?.error, type: 'error' }));
         return rejectWithValue (error.response?.data?.error);
     }
 });
@@ -69,7 +69,7 @@ export const deleteBlog = createAsyncThunk('Blog/deleteBlog', async (slug, { dis
 
         return response;
     } catch (error) {
-        dispatch(showToast({ message: 'Blog deletion failed!', type: 'error' }));
+        dispatch(showToast({ message: error.response?.data?.error, type: 'error' }));
         return rejectWithValue (error.response?.data?.error);
     }
 });

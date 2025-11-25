@@ -1,9 +1,14 @@
 const Blog = require("../models/blog.model");
+const { deleteImages } = require('../config/cloud.config');
 
-const createBlog = async (data, path) => {
+const createBlog = async (data, file) => {
     const response = {};
     try {
-        const blog = await Blog.create ({...data, cover_image: {url: path}});
+        if (!file) {
+            response.error = "Cover image is required"; return response;
+        }
+
+        const blog = await Blog.create ({...data, cover_image: {url: file?.path, filename: file?.filename}});
 
         if (!blog) {
             response.error = "Blog not created";
@@ -34,7 +39,7 @@ const get_blog = async (data) => {
     return response;  
 };
 
-const getAllBlogs = async (data) => {
+const getAllBlogs = async () => {
     const response = {};
     try {
         const blog = await Blog.find();
@@ -59,6 +64,13 @@ const deleteBlog = async (data) => {
         if (!blog) {
             response.error = "Blog not deleted";
         } else {
+            try {
+                console.log (blog);
+                if (blog.cover_image?.filename) await deleteImages ([blog.cover_image?.filename]);
+            } catch (cloudError) {
+                console.log("Error deleting media:", cloudError);
+            }
+
             response.success = true;
             response.blog = blog;
         }

@@ -9,7 +9,9 @@ import { deleteBlog, getAllBlogs } from '../redux/slices/blog.slice';
 import { showToast } from '../redux/slices/toast.slice';
 
 function Dashboard () {
+    const authState = useSelector ((state) => state.auth);
   const blogState = useSelector ((state) => state.blog);
+
   const dispatch = useDispatch ();
   const navigate = useNavigate();
 
@@ -62,16 +64,16 @@ function Dashboard () {
         {/* Header Section: Flex-col on mobile, Flex-row on desktop */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 sm:mb-12 gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-2">Your Stories</h1>
-            <p className="text-gray-500 text-sm sm:text-base">Manage your blog blogs and drafts.</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-2">{authState.isLoggedIn ? 'Your Stories' : 'All Stories'}</h1>
+            <p className="text-gray-500 text-sm sm:text-base">{authState.isLoggedIn ? 'Manage your blog blogs and drafts.' : ''}</p>
           </div>
           
           {/* New Story Button: Full width on mobile for better tapping */}
-          <Link to={'/blog/edit'}
+          {authState.isLoggedIn && <Link to={'/blog/edit'}
             className="w-full sm:w-auto justify-center bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-full font-medium shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
           >
             <Plus size={18} /> New Story
-          </Link>
+          </Link>}
         </div>
 
         {blogState.blogList.length === 0 ? (
@@ -91,8 +93,8 @@ function Dashboard () {
                 className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer group flex flex-col h-full relative"
               >
                 <div className="flex justify-between items-start mb-4">
-                  <span className={`px-2 py-1 rounded-md text-xs font-medium ${blog.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
-                    {blog.status === 'published' ? 'Published' : 'Draft'}
+                  <span className={`px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-700`}>
+                    'Published'
                   </span>
                   
                   {/* Action Buttons: Visible by default on mobile (opacity-100), hidden until hover on desktop (sm:opacity-0) */}
@@ -103,7 +105,7 @@ function Dashboard () {
                     >
                       <ExternalLink size={16} />
                     </Link>
-                    <button 
+                    {authState.isLoggedIn && <button 
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent card click
                         handleDeleteClick(blog.slug);
@@ -112,7 +114,7 @@ function Dashboard () {
                       title="Delete"
                     >
                       <Trash2 size={16} />
-                    </button>
+                    </button>}
                   </div>
                 </div>
                 
@@ -129,7 +131,7 @@ function Dashboard () {
                         year: 'numeric'
                     })
                     : 'Unknown Date'}</span>
-                  <Link to={`/blog/edit/${blog?.slug}`} className="flex items-center gap-1 group-hover:text-slate-900 transition-colors">Edit <ArrowRight size={12} /></Link>
+                  {authState.isLoggedIn && <Link to={`/blog/edit/${blog?.slug}`} className="flex items-center gap-1 group-hover:text-slate-900 transition-colors">Edit <ArrowRight size={12} /></Link>}
                 </div>
               </div>
             ))}

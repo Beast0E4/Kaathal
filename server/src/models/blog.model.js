@@ -3,7 +3,8 @@ const Schema = mongoose.Schema;
 
 const blogSchema = new Schema({
     cover_image: {
-        url: { type: String },
+        url: { type: String, required: true },
+        filename: { type: String, required: true }
     },
     title: {
         type: String,
@@ -24,6 +25,7 @@ const blogSchema = new Schema({
     slug: {
         type: String,
         required: [true, 'Slug cannot be empty'],
+        unique: true
     },
     theme: {
         type: String,

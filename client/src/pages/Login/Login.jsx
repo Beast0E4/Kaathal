@@ -102,7 +102,7 @@ const Login = () => {
 
               {/* Password Field */}
               <div className="group relative">
-                <label htmlFor="password" class="mb-1 block text-sm font-medium text-gray-700">Password</label>
+                <label htmlFor="password" className="mb-1 block text-sm font-medium text-gray-700">Password</label>
                 <div className="relative">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />

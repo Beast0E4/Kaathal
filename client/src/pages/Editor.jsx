@@ -5,7 +5,8 @@ import {
     Save, Send, Globe, Hash, Sparkles,
     PanelLeftClose, CheckCircle2, AlertCircle,
     Quote, Highlighter, ImagePlus, UploadCloud, Palette,
-    Link as LinkIcon
+    Link as LinkIcon,
+    Loader2
 } from 'lucide-react';
 import ToolbarButton from "../components/ToolbarButton";
 import { useDispatch, useSelector } from "react-redux";
@@ -287,8 +288,34 @@ function Editor() {
                     <button onClick={viewBlog} className="flex items-center justify-center sm:gap-2 bg-slate-100 text-slate-700 w-9 h-9 sm:w-auto sm:px-4 sm:py-2 rounded-full text-sm font-medium hover:bg-slate-200 transition-all">
                         <Eye size={18} /> <span className="hidden sm:inline">Preview</span>
                     </button>
-                    <button onClick={() => handleSave()} className="flex items-center justify-center sm:gap-2 bg-black text-white w-9 h-9 sm:w-auto sm:px-4 sm:py-2 rounded-full text-sm font-medium hover:bg-gray-800 transition-all shadow-lg">
-                        <Send size={16} /> <span className="hidden sm:inline">{blog_slug ? 'Update' : 'Publish'}</span>
+
+                    <button 
+                        onClick={() => handleSave()} 
+                        disabled={saveStatus === 'saving'}
+                        className={`
+                            flex items-center justify-center sm:gap-2 
+                            bg-black text-white 
+                            w-9 h-9 sm:w-auto sm:px-4 sm:py-2 
+                            rounded-full text-sm font-medium 
+                            transition-all shadow-lg
+                            ${saveStatus === 'saving' ? 'bg-gray-800 cursor-not-allowed opacity-80' : 'hover:bg-gray-800'}
+                        `}
+                    >
+                        {saveStatus === 'saving' ? (
+                            <>
+                                <Loader2 size={16} className="animate-spin" />
+                                <span className="hidden sm:inline">
+                                    {blog_slug ? 'Updating...' : 'Publishing...'}
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                <Send size={16} /> 
+                                <span className="hidden sm:inline">
+                                    {blog_slug ? 'Update' : 'Publish'}
+                                </span>
+                            </>
+                        )}
                     </button>
                 </div>
             </nav>

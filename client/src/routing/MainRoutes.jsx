@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { Route, Routes } from "react-router-dom";
 
 import Home from "../pages/Home";
 import Layout from "../pages/Layout/Layout";
@@ -9,30 +9,38 @@ import Editor from "../pages/Editor";
 import Login from "../pages/Login/Login";
 import SignUp from "../pages/Signup/Signup";
 import Profile from "../pages/Profile/Profile";
-import ProtectedRoute from "./ProtectedRoute";
+import NotFound from "../pages/NotFound/NotFound";
 
-function MainRoutes() {
+function MainRoutes () {
   return (
-    <>
-        <Routes
-            path="/"
-            element={
-            <ProtectedRoute>
-                <Layout />   {/* now Layout stays clean */}
-            </ProtectedRoute>
-            }
-        >
-            <Route index element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/create-account" element={<SignUp />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/blog/:slug" element={<Preview />} />
-            <Route path="/blog/edit/:blog_slug" element={<Editor />} />
-            <Route path="/blog/edit" element={<Editor />} />
+      <Routes>
+        {/* --- PUBLIC ROUTES --- */}
+        {/* These are NOT wrapped in Layout, so anyone can see them */}
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/editor" element={<Editor />} />
+        <Route path="/blog/:slug" element={<Preview />} />
+
+        {/* --- PROTECTED ROUTES --- */}
+        {/* These ARE wrapped in Layout. */}
+        {/* If user is NOT logged in, Layout shows PermissionDenied instead of these pages */}
+        <Route element={<Layout />}>
+            <Route path="/" element={<Home />} />
             <Route path="/profile" element={<Profile />} />
-        </Routes>
-    </>
+            <Route path="/editor/:blog_slug" element={<Editor />} />
+            
+            {/* Note: Based on your request, Login/Signup are here. 
+                Non-logged-in users visiting /login will see Permission Denied. */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<SignUp />} />
+        </Route>
+
+        {/* --- 404 CATCH-ALL ROUTE --- */}
+        {/* The '*' matches anything that wasn't matched above */}
+        <Route path="*" element={<NotFound />} />
+
+      </Routes>
   );
 }
+
 
 export default MainRoutes;

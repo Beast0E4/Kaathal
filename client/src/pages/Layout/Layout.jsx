@@ -1,15 +1,15 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { useEffect } from "react";
+import PermissionDenied from "../Denied/PermissionDenied";
 
 function Layout() {
   const authState = useSelector((state) => state.auth);
 
-  return (
-    <div>
-      {authState?.isLoggedIn && <Outlet />}
-    </div>
-  );
+  if (authState?.isLoggedIn) {
+    return <Outlet />;
+  } else {
+    return <PermissionDenied />;
+  }
 }
 
 export default Layout;
